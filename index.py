@@ -7,7 +7,9 @@ from secret import token
 
 from discord.ext import commands
 
-extensions = []
+extensions = [extensions.help_command]
+
+os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 tracemalloc.start()
 
 class EpicGamer(commands.Bot):
