@@ -48,3 +48,5 @@ class EpicHelpCommand(commands.HelpCommand):
     async def send_cog_help(self, cog):
         print('sending cog help')
         return
+
+#Much more todo, this is not anywhere close to usable yet
