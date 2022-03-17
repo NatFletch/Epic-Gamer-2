@@ -7,9 +7,9 @@ class EpicHelpSelect(discord.ui.Select):
     def __init__(self):
         super().__init__(placeholder="Select a Command Category",options=[discord.SelectOption(label="Help", description="Shows the help command")])
 
-async def callback(self, interaction: discord.Interaction):
-    print(interaction.data)
-    await send_cog_help()
+    async def callback(self, interaction: discord.Interaction):
+        print(interaction.data)
+        await EpicHelpCommand().send_cog_help()
 
 class EpicHelpView(discord.ui.View):
     def __init__(self, *, timeout=60):

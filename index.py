@@ -1,17 +1,16 @@
 import discord
-import jishaku
 import os
 import tracemalloc
-import asyncio
 
 from secret import token
 
 from discord.ext import commands
 
-extensions = ["extensions.help_command"]
+extensions = ["extensions.help_command", "extensions.fun"]
 
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 tracemalloc.start()
+
 
 class EpicGamer(commands.Bot):
     def __init__(self):
