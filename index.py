@@ -1,7 +1,12 @@
 import discord
 import conf
 import os
+import jishaku
+import tracemalloc
 from discord.ext import commands
+
+os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
+tracemalloc.start()
 
 class EpicGamer(commands.Bot):
     def __init__(self) -> None:
@@ -21,11 +26,10 @@ class EpicGamer(commands.Bot):
         # Automatically find all extensions and load them
 
         for extension in os.listdir("./extensions"):
-            print('running')
             if(extension.endswith('.py')):
                 await self.load_extension("extensions." + extension[:-3])
+        await self.load_extension("jishaku")
 
 
 if __name__ == "__main__":
-    bot: EpicGamer = EpicGamer()
-    bot.run(conf.token)
+    EpicGamer().run(conf.token)
