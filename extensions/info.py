@@ -1,5 +1,7 @@
 import discord
 import time
+import psutil
+import os
 from discord.ext import commands
 from discord_timestamps import format_timestamp as format_time
 from discord_timestamps import TimestampType
@@ -13,7 +15,7 @@ class Info(commands.Cog):
     async def userinfo(self, ctx: commands.Context, member = None) -> None:
         """Fetches info for a given user or on yourself"""
         if not member: member = ctx.author
-        
+
         status_dict = {
             discord.Status.online: "<:Online:1208304786982572062> Online",
             discord.Status.dnd: "<:dnd:1208304483994697758> Do Not Disturb",
@@ -41,9 +43,48 @@ class Info(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.hybrid_command(aliases=["sinfo"])
-    async def serverinfo(self, ctx: commands.Context, server=None):
-        if not server: server = ctx.server
+    async def serverinfo(self, ctx: commands.Context):
+        """Fetches info on the current server"""
+        guild = ctx.guild
 
+        embed = discord.Embed(
+            title=f"{guild.name}",
+            description=f"""
+                **Server Name:** {guild.name}
+                **Server Member Count:** {guild.member_count}
+                **Server Creation Date:** {format_time(time.mktime(guild.created_at.timetuple()), TimestampType.LONG_DATE)}
+                **Owener:** {guild.owner.mention}
+                **Text Channel Count:** {len(guild.text_channels)},
+                **Voice Channel Count:** {len(guild.voice_channels)}
+                **Role Count:** {len(guild.roles)}
+            """,
+            color=embed_color
+        )
+        
+        if not (icon := guild.icon): icon = self.bot.user.avatar
+        embed.set_author(name=guild.name, icon_url=icon.with_format("png"))
+        embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))
+        await ctx.send(embed=embed)
+    
+    @commands.hybrid_command(aliases=["stats"])
+    async def statistics(self, ctx):
+        """Provides some stats on the bot"""
+        load1, load5, load15 = psutil.getloadavg()
+        embed = discord.Embed(
+            title=f"{self.bot.user.name}",
+            description=f"""
+                **Bot Name:** {self.bot.user.name}
+                **Server Count:** {len(self.bot.guilds)}
+                **Account Creation Date:** {format_time(time.mktime(self.bot.user.created_at.timetuple()), TimestampType.LONG_DATE)}
+                **Owener:** NatFletch
+                **Latency:** {round(self.bot.latency * 1000)}ms,
+                **CPU Usage:** {round(load15/os.cpu_count() * 100)}%,
+                **Memory:** {round(psutil.virtual_memory()[3]/1000000000, 2)} gb / {round(psutil.virtual_memory()[0]/1000000000, 2)} gb
+            """,
+            color=embed_color
+        )
+        embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))
+        await ctx.send(embed=embed)
 
 
 async def setup(bot):

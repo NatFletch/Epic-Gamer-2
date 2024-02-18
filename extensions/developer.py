@@ -18,11 +18,11 @@ class Developer(commands.Cog):
     @commands.is_owner()
     async def reload_extensions(self, ctx):
         """Reloads all extensions"""
-        for extension in os.listdir("./"):
+        for extension in os.listdir("./extensions"):
             if(extension.endswith('.py')):
-                await self.bot.load_extension("extensions." + extension[:-3])
-        await self.bot.load_extension("jishaku")
-        await ctx.send(["Reloaded" + extension for extension in os.listdir("./extensions")].split("\n"))
+                await self.bot.reload_extension("extensions." + extension[:-3])
+        await self.bot.reload_extension("jishaku")
+        await ctx.send("\n".join(["Reloaded -> " + extension for extension in os.listdir("./extensions") if extension.endswith(".py")]))
 
 
 async def setup(bot):

@@ -1,4 +1,5 @@
 discord.py[voice]
-asyncpg
+asyncpg[speedups]
 discord-timestamps
 jishaku
+psutil
