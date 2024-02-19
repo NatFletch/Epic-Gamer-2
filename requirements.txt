@@ -3,3 +3,4 @@ asyncpg[speedups]
 discord-timestamps
 jishaku
 psutil
+pylance

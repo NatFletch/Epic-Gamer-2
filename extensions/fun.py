@@ -30,7 +30,24 @@ class Fun(commands.Cog):
                 embed.set_author(name=f"u/"+json["author"])
                 embed.set_footer(text="r/" + json["subreddit"])
                 await ctx.send(embed=embed)
-                
-        
+
+    @commands.hybrid_command()
+    async def choose(self, ctx, option1, option2):
+        """Chooses between two different options"""
+        responses = ["I think you should choose", "I'm leaning towards", "I really like", "Go for", "Try", "I suggest"]
+        await ctx.send(f"{random.choice(responses)}: {random.choice([option1, option2])}")
+
+    @commands.hybrid_command()
+    async def roll(self, ctx, number=None):
+        """Rolls a dice between 1 and specified number"""
+        if not number:
+            number = 6
+
+        number = int(number)
+        if number > 1000000:
+            number = 6
+        await ctx.send(f"Rolling {number} sided dice... rolled: {random.randint(1,number)}")
+
+
 async def setup(bot):
     await bot.add_cog(Fun(bot))
