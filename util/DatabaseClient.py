@@ -11,40 +11,72 @@ class DatabaseClient:
     async def close(self):
         await self.connection.close()
 
+    async def execute(self, string, *args):
+        transaction = self.connection.transaction()
+        await transaction.start()
+        try:
+            await self.connection.execute(string, *args)
+        except:
+            await transaction.rollback()
+            raise
+        else:
+            await transaction.commit()
+
+    async def fetchrow(self, string, *args):
+        transaction = self.connection.transaction()
+        await transaction.start()
+        try:
+            response = await self.connection.fetchrow(string, *args)
+        except:
+            await transaction.rollback()
+            raise
+        else:
+            await transaction.commit()
+
+        return response
+
     async def create_suggestion_table(self):
-        async with self.connection.transaction():
-            print("Creating suggestions table")
-            await self.connection.execute("""
-                CREATE TABLE suggestions (
-                    id serial,
-                    discord_message bigint,
-                    guild_id bigint
-                )
-            """)
+        print("Creating suggestions table")
+        await self.execute("""
+            CREATE TABLE suggestions (
+                id serial,
+                discord_message bigint,
+                guild_id bigint
+            )
+        """)
 
     async def find_suggestion_table(self):
-        connection = self.connection
-        async with connection.transaction():
-            response = await connection.fetchrow("""
-                SELECT to_regclass('public.suggestions')
-            """)
-            return dict(response)
+        response = await self.fetchrow("""
+            SELECT to_regclass('public.suggestions')
+        """)
+        return dict(response)
 
     async def create_suggestion_channel_table(self):
-        async with self.connection.transaction():
-            print("Creating suggestion_channels table")
-            await self.connection.execute("""
-                CREATE TABLE suggestion_channels (
-                    guild_id bigint,
-                    channel_id bigint
-                )
-            """)
+        print("Creating suggestion_channels table")
+        await self.execute("""
+            CREATE TABLE suggestion_channels (
+                guild_id bigint,
+                channel_id bigint
+            )
+        """)
 
     async def find_suggestion_channel_table(self):
-        connection = self.connection
-        async with connection.transaction():
-            response = await connection.fetchrow("""
-                SELECT to_regclass('public.suggestion_channels')
-            """)
-            return dict(response)
+        response = await self.fetchrow("""
+            SELECT to_regclass('public.suggestion_channels')
+        """)
+        return dict(response)
 
+    async def create_suggestion_allowed_role_table(self):
+        print("Creating suggestion_allowed_roles table")
+        await self.execute("""
+            CREATE TABLE suggestion_allowed_roles (
+                guild_id bigint,
+                role_id bigint
+            )
+        """)
+
+    async def find_suggestion_allowed_role_table(self):
+        response = await self.fetchrow("""
+            SELECT to_regclass('public.suggestion_allowed_roles')
+        """)
+        return dict(response)

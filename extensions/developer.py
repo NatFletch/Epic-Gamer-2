@@ -55,8 +55,15 @@ class Developer(commands.Cog):
     async def execute_db(self, ctx, *, string):
         """Performs any action to the database"""
         db_client = await self.bot.fetch_db_client()
-        connection = db_client.connection
-        message = await connection.execute(string)
+        message = await db_client.execute(string)
+        await ctx.send(message)
+
+    @commands.command()
+    @commands.is_owner()
+    async def fetch_db(self, ctx, *, string):
+        """Performs any action to the database"""
+        db_client = await self.bot.fetch_db_client()
+        message = await db_client.fetchrow(string)
         await ctx.send(message)
 
     @commands.command()

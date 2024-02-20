@@ -39,11 +39,16 @@ class EpicGamer(commands.Bot):
         db_client = await self.fetch_db_client()
         suggestions_table = await db_client.find_suggestion_table()
         suggestions_channel_table = await db_client.find_suggestion_channel_table()
+        suggestions_allowed_role_table = await db_client.find_suggestion_allowed_role_table()
+
         if not suggestions_table.get("to_regclass"):
             await db_client.create_suggestion_table()
 
         if not suggestions_channel_table.get("to_regclass"):
             await db_client.create_suggestion_channel_table()
+
+        if not suggestions_allowed_role_table.get("to_regclass"):
+            await db_client.create_suggestion_allowed_role_table()
 
         # Automatically find all extensions and load them
         for extension in os.listdir("./extensions"):
