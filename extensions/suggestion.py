@@ -1,4 +1,5 @@
 import discord
+import asyncio
 from conf import embed_color
 from discord.ext import commands
 
@@ -14,22 +15,30 @@ class SuggestionHelper:
     async def find_suggestion_channel(self, guild):
         db_client = await self.bot.fetch_db_client()
         response = await db_client.fetchrow("SELECT * FROM suggestion_channels WHERE guild_id = $1", guild)
-        return response["channel_id"]
+        if response is not None:
+            return response["channel_id"]
+        else:
+            return False
 
     async def find_suggestion_id(self, message_id, guild_id):
         db_client = await self.bot.fetch_db_client()
-        response = await db_client.fetchrow("SELECT * FROM suggestions WHERE discord_message = $1 AND guild_id = $2", message_id, guild_id)
+        response = await db_client.fetchrow("SELECT * FROM suggestions WHERE discord_message = $1 AND guild_id = $2",
+                                            message_id, guild_id)
         return response["id"]
 
     async def find_message_id(self, guild_id, suggestion_id):
         db_client = await self.bot.fetch_db_client()
-        response = await db_client.fetchrow("SELECT * FROM suggestions WHERE id = $1 AND guild_id = $2", suggestion_id, guild_id)
+        response = await db_client.fetchrow("SELECT * FROM suggestions WHERE id = $1 AND guild_id = $2", suggestion_id,
+                                            guild_id)
         return response["discord_message"]
-    
+
     async def get_guild_staff_role(self, guild_id):
         db_client = await self.bot.fetch_db_client()
-        response = await db_client.fetchrow("SELECT * FROM suggestion_allowed_roles WHERE guild_id = $1", guild_id)
-        return response["role_id"]
+        response = await db_client.fetchrow("SELECT * FROM staff_roles WHERE guild_id = $1", guild_id)
+        if response is not None:
+            return response["role_id"]
+        else:
+            return False
 
 
 class Suggestions(commands.Cog):
@@ -42,14 +51,21 @@ class Suggestions(commands.Cog):
         async def predicate(ctx):
             role_id = await ctx.cog.shelper.get_guild_staff_role(ctx.guild.id)
             author_roles = [role.id for role in ctx.author.roles]
-            return role_id in author_roles or ctx.guild.owner.id == ctx.author.id
+
+            if role_id in author_roles or ctx.author.id == ctx.guild.owner.id or ctx.author.id in ctx.bot.owner_ids:
+                return True
 
         return commands.check(predicate)
 
-    @commands.hybrid_group(aliases=["suggestion"])
+    @commands.hybrid_command()
+    @commands.guild_only()
     async def suggest(self, ctx, *, message):
         """Posts a suggestion in the server suggestions channel"""
-        channel = self.bot.get_channel(await self.shelper.find_suggestion_channel(ctx.guild.id))
+        channel_id = await self.shelper.find_suggestion_channel(ctx.guild.id)
+        if channel_id is False:
+            return await ctx.send(
+                "This server does not have a configured suggestions channel. Have your owner run the command `/config settings.suggestions.suggestion_channel <channel>` to set it up")
+        channel = self.bot.get_channel(channel_id)
         discord_message = await channel.send("\u200b")
         await self.shelper.insert_new_suggestion(ctx.guild.id, discord_message.id)
 
@@ -62,17 +78,27 @@ class Suggestions(commands.Cog):
         await discord_message.add_reaction('\U0001f44e')
         await ctx.send(f"Suggestion #{suggestion_id} successfully posted!")
 
-    @suggest.command()
+    @commands.hybrid_group()
+    @commands.guild_only()
     @check_if_staff()
-    async def accept(self, ctx, id, *, reason):
+    async def suggestion(self, ctx):
+        """The group that manages the suggestion moderation commands"""
+        await ctx.send("You need to supply a sub command eg: `/suggestion accept`, `/suggestion consider` `/suggestion deny`")
+
+    @suggestion.command()
+    @commands.guild_only()
+    @check_if_staff()
+    async def accept(self, ctx, id, *, reason=None):
         """Accepts a suggestion"""
+        if not reason:
+            reason = "No reason specified"
+
         message_id = await self.shelper.find_message_id(ctx.guild.id, int(id))
         channel_id = await self.shelper.find_suggestion_channel(ctx.guild.id)
         channel = self.bot.get_channel(channel_id)
         message = await channel.fetch_message(int(message_id))
         embed = message.embeds[0]
         embed.color = 0x00ff00
-        embed.title = "(Accepted) " + embed.title
         try:
             embed.remove_field(0)
         except IndexError:
@@ -82,17 +108,19 @@ class Suggestions(commands.Cog):
         await message.edit(content="\u00A0", embed=embed)
         await ctx.send("Suggestion successfully approved")
 
-    @suggest.command()
+    @suggestion.command()
+    @commands.guild_only()
     @check_if_staff()
-    async def deny(self, ctx, id, *, reason):
+    async def deny(self, ctx, id, *, reason=None):
         """Denies a suggestion"""
+        if not reason:
+            reason = "No reason specified"
         message_id = await self.shelper.find_message_id(ctx.guild.id, int(id))
         channel_id = await self.shelper.find_suggestion_channel(ctx.guild.id)
         channel = self.bot.get_channel(channel_id)
         message = await channel.fetch_message(int(message_id))
         embed = message.embeds[0]
         embed.color = 0xff0000
-        embed.title = "(Denied) " + embed.title
         try:
             embed.remove_field(0)
         except IndexError:
@@ -101,19 +129,19 @@ class Suggestions(commands.Cog):
         await message.edit(content="\u00A0", embed=embed)
         await ctx.send("Suggestion successfully denied")
 
-    @suggest.command()
+    @suggestion.command()
+    @commands.guild_only()
     @check_if_staff()
-    async def consider(self, ctx, id, *, reason):
+    async def consider(self, ctx, id, *, reason=None):
         """Considers a suggestion"""
+        if not reason:
+            reason = "No reason specified"
         message_id = await self.shelper.find_message_id(ctx.guild.id, int(id))
         channel_id = await self.shelper.find_suggestion_channel(ctx.guild.id)
         channel = self.bot.get_channel(channel_id)
         message = await channel.fetch_message(int(message_id))
         embed = message.embeds[0]
         embed.color = 0xfcbb42
-        embed.title = "(Considered) " + embed.title
-        title = embed.title.split()
-        bad_titles = ["(Accepted)", "(Considered)", "(Denied)"]
         try:
             embed.remove_field(0)
         except IndexError:

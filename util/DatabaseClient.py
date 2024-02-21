@@ -15,12 +15,13 @@ class DatabaseClient:
         transaction = self.connection.transaction()
         await transaction.start()
         try:
-            await self.connection.execute(string, *args)
+            response = await self.connection.execute(string, *args)
         except:
             await transaction.rollback()
             raise
         else:
             await transaction.commit()
+            return response
 
     async def fetchrow(self, string, *args):
         transaction = self.connection.transaction()
@@ -66,17 +67,32 @@ class DatabaseClient:
         """)
         return dict(response)
 
-    async def create_suggestion_allowed_role_table(self):
-        print("Creating suggestion_allowed_roles table")
+    async def create_staff_roles_table(self):
+        print("Creating staff_roles table")
         await self.execute("""
-            CREATE TABLE suggestion_allowed_roles (
+            CREATE TABLE staff_roles (
                 guild_id bigint,
                 role_id bigint
             )
         """)
 
-    async def find_suggestion_allowed_role_table(self):
+    async def find_staff_roles_table(self):
         response = await self.fetchrow("""
-            SELECT to_regclass('public.suggestion_allowed_roles')
+            SELECT to_regclass('public.staff_roles')
+        """)
+        return dict(response)
+
+    async def create_admin_roles_table(self):
+        print("Creating admin_roles table")
+        await self.execute("""
+            CREATE TABLE admin_roles (
+                guild_id bigint,
+                role_id bigint
+            )
+        """)
+
+    async def find_admin_roles_table(self):
+        response = await self.fetchrow("""
+            SELECT to_regclass('public.admin_roles')
         """)
         return dict(response)

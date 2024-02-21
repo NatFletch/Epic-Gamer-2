@@ -39,7 +39,7 @@ class EpicGamer(commands.Bot):
         db_client = await self.fetch_db_client()
         suggestions_table = await db_client.find_suggestion_table()
         suggestions_channel_table = await db_client.find_suggestion_channel_table()
-        suggestions_allowed_role_table = await db_client.find_suggestion_allowed_role_table()
+        suggestions_allowed_role_table = await db_client.find_staff_roles_table()
 
         if not suggestions_table.get("to_regclass"):
             await db_client.create_suggestion_table()
@@ -48,7 +48,7 @@ class EpicGamer(commands.Bot):
             await db_client.create_suggestion_channel_table()
 
         if not suggestions_allowed_role_table.get("to_regclass"):
-            await db_client.create_suggestion_allowed_role_table()
+            await db_client.create_staff_roles_table()
 
         # Automatically find all extensions and load them
         for extension in os.listdir("./extensions"):
@@ -97,8 +97,8 @@ class EpicGamer(commands.Bot):
         await ctx.send(embed=embed)
 
     async def close(self):
-        db_client = self.fetch_db_client()
-        db_client.close()
+        db_client = await self.fetch_db_client()
+        await db_client.close()
         print("DB Closed")
         await super().close()
 
