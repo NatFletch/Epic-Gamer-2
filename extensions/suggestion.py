@@ -1,6 +1,4 @@
 import discord
-import asyncio
-from conf import embed_color
 from discord.ext import commands
 
 
@@ -57,14 +55,16 @@ class Suggestions(commands.Cog):
 
         return commands.check(predicate)
 
-    @commands.hybrid_command()
+    @commands.hybrid_command(usage="<message>")
+    @commands.cooldown(1, 120)
     @commands.guild_only()
-    async def suggest(self, ctx, *, message):
+    async def suggest(self, ctx, *, message: str = commands.parameter(default=None, description="The thing you want to suggest")):
         """Posts a suggestion in the server suggestions channel"""
         channel_id = await self.shelper.find_suggestion_channel(ctx.guild.id)
         if channel_id is False:
             return await ctx.send(
                 "This server does not have a configured suggestions channel. Have your owner run the command `/config settings.suggestions.suggestion_channel <channel>` to set it up")
+        if message is None: return await ctx.send("Please provide a suggestion message in the command")
         channel = self.bot.get_channel(channel_id)
         discord_message = await channel.send("\u200b")
         await self.shelper.insert_new_suggestion(ctx.guild.id, discord_message.id)
@@ -78,17 +78,17 @@ class Suggestions(commands.Cog):
         await discord_message.add_reaction('\U0001f44e')
         await ctx.send(f"Suggestion #{suggestion_id} successfully posted!")
 
-    @commands.hybrid_group()
+    @commands.hybrid_group(usage="")
     @commands.guild_only()
     @check_if_staff()
     async def suggestion(self, ctx):
         """The group that manages the suggestion moderation commands"""
         await ctx.send("You need to supply a sub command eg: `/suggestion accept`, `/suggestion consider` `/suggestion deny`")
 
-    @suggestion.command()
+    @suggestion.command(usage="<id> [reason]")
     @commands.guild_only()
     @check_if_staff()
-    async def accept(self, ctx, id, *, reason=None):
+    async def accept(self, ctx, id: int = commands.parameter(description="The suggestion id"), *, reason: str=commands.parameter(default=None, description="The description for your decision")):
         """Accepts a suggestion"""
         if not reason:
             reason = "No reason specified"
@@ -108,10 +108,10 @@ class Suggestions(commands.Cog):
         await message.edit(content="\u00A0", embed=embed)
         await ctx.send("Suggestion successfully approved")
 
-    @suggestion.command()
+    @suggestion.command(usage="<id> [reason]")
     @commands.guild_only()
     @check_if_staff()
-    async def deny(self, ctx, id, *, reason=None):
+    async def deny(self, ctx, id: int = commands.parameter(description="The suggestion id"), *, reason: str=commands.parameter(default=None, description="The description for your decision")):
         """Denies a suggestion"""
         if not reason:
             reason = "No reason specified"
@@ -129,10 +129,10 @@ class Suggestions(commands.Cog):
         await message.edit(content="\u00A0", embed=embed)
         await ctx.send("Suggestion successfully denied")
 
-    @suggestion.command()
+    @suggestion.command(usage="<id> [reason]")
     @commands.guild_only()
     @check_if_staff()
-    async def consider(self, ctx, id, *, reason=None):
+    async def consider(self, ctx, id: int = commands.parameter(description="The suggestion id"), *, reason: str=commands.parameter(default=None, description="The description for your decision")):
         """Considers a suggestion"""
         if not reason:
             reason = "No reason specified"

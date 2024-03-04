@@ -1,6 +1,3 @@
-import json
-
-
 class DatabaseClient:
     def __init__(self, connection):
         self.connection = connection
@@ -35,6 +32,21 @@ class DatabaseClient:
             await transaction.commit()
 
         return response
+
+    async def check_for_tables(self):
+        db_client = self
+        suggestions_table = await db_client.find_suggestion_table()
+        suggestions_channel_table = await db_client.find_suggestion_channel_table()
+        suggestions_allowed_role_table = await db_client.find_staff_roles_table()
+
+        if not suggestions_table.get("to_regclass"):
+            await db_client.create_suggestion_table()
+
+        if not suggestions_channel_table.get("to_regclass"):
+            await db_client.create_suggestion_channel_table()
+
+        if not suggestions_allowed_role_table.get("to_regclass"):
+            await db_client.create_staff_roles_table()
 
     async def create_suggestion_table(self):
         print("Creating suggestions table")

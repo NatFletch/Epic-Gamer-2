@@ -35,10 +35,10 @@ class Config(commands.Cog):
         self.bot = bot
         self.chelper = ConfigHelper(self.bot)
 
-    @commands.hybrid_command(aliases=["conf", "configure", "settings"])
+    @commands.hybrid_command(aliases=["conf", "configure", "settings"], usage="[setting] <option>")
     @commands.guild_only()
     @check_if_owner()
-    async def config(self, ctx, setting, option):
+    async def config(self, ctx, setting: str = commands.parameter(default=None, description="The setting you would like to change"), option: str = commands.parameter(default=None, description="The option for the specific setting")):
         """Command to change server settings"""
         if setting == "settings.suggestions.suggestion_channel":
             converted = await commands.TextChannelConverter().convert(ctx, option)

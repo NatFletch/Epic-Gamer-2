@@ -9,40 +9,40 @@ class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         
-    @commands.hybrid_command(name="8ball")
-    async def advice(self, ctx, *, message):
+    @commands.hybrid_command(name="8ball", usage="<message>")
+    async def advice(self, ctx, *, message: str = commands.parameter(default=None, description="The message you wish to give to the 8 ball")):
         """Take a shot at the magic 8 ball for advice!"""
+        if message is None: return await ctx.send("You need to provide a message for the 8 ball to answer")
         responses = ["Definitely.", "It is certain.", "Most likely." , "Outlook good.", "Yes.", "You may rely on it.", "Ask again later.",
                      "Better not tell you now.", "My reply is no.", "Signs point to yes.", "Very doubtful.", "Without a doubt.", "Cannot predict now."
                      "Concentrate and ask again.", "It is decidely so.", "My sources say no."]
-        await ctx.send(f"{ctx.author.mention}: {random.choice(responses)}")
+        await ctx.send(f"{ctx.author.mention} asks {message}: {random.choice(responses)}")
         
-    @commands.hybrid_command()
+    @commands.hybrid_command(usage="")
+    @commands.cooldown(1, 5)
     async def meme(self, ctx):
         """Finds a random meme from some subreddits"""
         subreddits = ["funny", "memes", "dankmemes", "shitposting", "ContagiousLaughter", "whenthe"]
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://meme-api.com/gimme/{random.choice(subreddits)}") as response:
-                json = await response.json(content_type=None)
-                    
-                embed = discord.Embed(title=json.get("title"), color=embed_color)
-                embed.set_image(url=json["url"])
-                embed.set_author(name=f"u/"+json["author"])
-                embed.set_footer(text="r/" + json["subreddit"])
-                await ctx.send(embed=embed)
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"https://meme-api.com/gimme/{random.choice(subreddits)}") as response:
+                    json = await response.json(content_type=None)
 
-    @commands.hybrid_command()
-    async def choose(self, ctx, option1, option2):
+                    embed = discord.Embed(title=json.get("title"), color=embed_color)
+                    embed.set_image(url=json["url"])
+                    embed.set_author(name=f"u/"+json["author"])
+                    embed.set_footer(text="r/" + json["subreddit"])
+                    await ctx.send(embed=embed)
+
+    @commands.hybrid_command(usage="<option1> <option2>")
+    async def choose(self, ctx, option1: str = commands.parameter(description="The first option"), option2: str = commands.parameter(description="The second option")):
         """Chooses between two different options"""
         responses = ["I think you should choose", "I'm leaning towards", "I really like", "Go for", "Try", "I suggest"]
-        await ctx.send(f"{random.choice(responses)}: {random.choice([option1, option2])}")
+        await ctx.send(f"{random.choice(responses)} {random.choice([option1, option2])}")
 
-    @commands.hybrid_command()
-    async def roll(self, ctx, number=None):
+    @commands.hybrid_command(usage="[sides]")
+    async def roll(self, ctx, number: int = commands.parameter(default=6, description="The number of sides for the dice")):
         """Rolls a dice between 1 and specified number"""
-        if not number:
-            number = 6
-
         number = int(number)
         if number > 1000000:
             number = 6

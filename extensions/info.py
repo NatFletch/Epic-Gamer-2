@@ -1,10 +1,8 @@
 import discord
-import time
 import psutil
 import os
 from discord.ext import commands
-from discord_timestamps import format_timestamp as format_time
-from discord_timestamps import TimestampType
+from discord.utils import format_dt
 from conf import embed_color
 
 
@@ -12,8 +10,8 @@ class Info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(aliases=["uinfo", "ui", "user-info"])
-    async def userinfo(self, ctx: commands.Context, member=None):
+    @commands.hybrid_command(aliases=["uinfo", "ui", "user-info"], usage="[member]")
+    async def userinfo(self, ctx, member: discord.Member = commands.parameter(default=None, description="The user you would like to find info on")):
         """Fetches info for a given user or on yourself"""
         if not member:
             member = ctx.author
@@ -24,16 +22,15 @@ class Info(commands.Cog):
             discord.Status.idle: "<:Idle:1208304788455038986> Idle",
             discord.Status.offline: "<:offline:1208304481033256990> Offline",
         }
-
         embed = discord.Embed(
             title=f"{member.name}",
             description=f"""
                 **Username:** {member.name}
                 **Nickname:** {member.nick}
-                **Account Creation Date:** {format_time(time.mktime(member.created_at.timetuple()), TimestampType.LONG_DATE)}
-                **Server Join Date:** {format_time(time.mktime(member.joined_at.timetuple()), TimestampType.LONG_DATE)}
+                **Account Creation Date:** {format_dt(member.created_at, style="F")}
+                **Server Join Date:** {format_dt(member.joined_at, style="F")}
                 **Join Position:** {sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}
-                **Status:** {status_dict[member.status]}
+                **Status:** {status_dict[ctx.guild.get_member(member.id).status]}
                 **Top Role:** {member.top_role.mention}
                 **Roles:** {" ".join([role.mention for role in member.roles if role != ctx.guild.default_role])}
             """,
@@ -44,7 +41,7 @@ class Info(commands.Cog):
         embed.set_thumbnail(url=member.avatar.with_format("png"))
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(aliases=["sinfo"])
+    @commands.hybrid_command(aliases=["sinfo"], usage="")
     async def serverinfo(self, ctx: commands.Context):
         """Fetches info on the current server"""
         guild = ctx.guild
@@ -69,7 +66,7 @@ class Info(commands.Cog):
             description=f"""
                 **Server Name:** {guild.name}
                 **Server Member Count:** {guild.member_count}
-                **Server Creation Date:** {format_time(time.mktime(guild.created_at.timetuple()), TimestampType.LONG_DATE)}
+                **Server Creation Date:** {format_dt(guild.created_at, style="F")}
                 **Owner:** {guild.owner.mention}
                 **Text Channel Count:** {len(guild.text_channels)},
                 **Voice Channel Count:** {len(guild.voice_channels)}
@@ -85,7 +82,7 @@ class Info(commands.Cog):
         embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(aliases=["stats"])
+    @commands.hybrid_command(aliases=["stats"], usage="")
     async def statistics(self, ctx):
         """Provides some stats on the bot"""
         load1, load5, load15 = psutil.getloadavg()
@@ -94,7 +91,7 @@ class Info(commands.Cog):
             description=f"""
                 **Bot Name:** {self.bot.user.name}
                 **Server Count:** {len(self.bot.guilds)}
-                **Account Creation Date:** {format_time(time.mktime(self.bot.user.created_at.timetuple()), TimestampType.LONG_DATE)}
+                **Account Creation Date:** {format_dt(self.bot.user.created_at, style="F")}
                 **Owner:** NatFletch
                 **Latency:** {round(self.bot.latency * 1000)}ms,
                 **CPU Usage:** {round(load15 / os.cpu_count() * 100)}%,
@@ -105,7 +102,7 @@ class Info(commands.Cog):
         embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(aliases=["latency"])
+    @commands.hybrid_command(aliases=["latency"], usage="")
     async def ping(self, ctx):
         """Shows the bot's current latency"""
         await ctx.send(f"Pong! {round(self.bot.latency * 1000)}ms")
