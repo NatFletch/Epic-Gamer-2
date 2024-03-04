@@ -3,7 +3,7 @@
 ## Installation
 - Install the latest version of Python
 - Clone this repository via:
-```git clone https://github.com/NatFletch/Epic-Gamer-2.git"```
+```git clone https://github.com/NatFletch/Epic-Gamer-2.git```
 - Install all the required packages via
 ```pip install -r requirements.txt```
 - Make a file at the top of the project directory called `conf.py`
