@@ -4,7 +4,7 @@ import math
 import os
 import tracemalloc
 
-from conf import token
+from conf import token, database_url
 from discord.ext import commands
 from util.DatabaseClient import DatabaseClient
 
@@ -28,7 +28,7 @@ class EpicGamer(commands.Bot):
 
     @staticmethod
     async def fetch_db_client():
-        connection = await asyncpg.connect("postgres://postgres@localhost/epic-gamer-2")
+        connection = await asyncpg.connect(database_url)
         return DatabaseClient(connection)
 
     async def setup_hook(self) -> None:
