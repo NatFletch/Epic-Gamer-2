@@ -13,7 +13,7 @@ tracemalloc.start()
 
 
 class EpicGamer(commands.Bot):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__(
             command_prefix=commands.when_mentioned_or("e/"),
             case_insensitive=True,
@@ -21,9 +21,9 @@ class EpicGamer(commands.Bot):
             activity=discord.Activity(type=discord.ActivityType.listening, name="e/help")
         )
 
-    async def on_ready(self) -> None:
+    async def on_ready(self):
         print("Epic Gamer is up and running")
-        print(f"Latency: {round(self.latency * 1000)}")
+        print(f"Latency: {round(self.latency * 1000)}ms")
         print(f"Server Count: {len(self.guilds)}")
 
     @staticmethod
@@ -31,7 +31,7 @@ class EpicGamer(commands.Bot):
         connection = await asyncpg.connect(database_url)
         return DatabaseClient(connection)
 
-    async def setup_hook(self) -> None:
+    async def setup_hook(self):
         # Check if database tables exist
         db_client = await self.fetch_db_client()
         await db_client.check_for_tables()

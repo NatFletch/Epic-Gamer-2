@@ -1,4 +1,5 @@
 import discord
+import sys
 import psutil
 import os
 from discord.ext import commands
@@ -24,16 +25,7 @@ class Info(commands.Cog):
         }
         embed = discord.Embed(
             title=f"{member.name}",
-            description=f"""
-                **Username:** {member.name}
-                **Nickname:** {member.nick}
-                **Account Creation Date:** {format_dt(member.created_at, style="F")}
-                **Server Join Date:** {format_dt(member.joined_at, style="F")}
-                **Join Position:** {sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}
-                **Status:** {status_dict[ctx.guild.get_member(member.id).status]}
-                **Top Role:** {member.top_role.mention}
-                **Roles:** {" ".join([role.mention for role in member.roles if role != ctx.guild.default_role])}
-            """,
+            description=f"**Username:** {member.name}\n**Nickname:** {member.nick}\n**Account Creation Date:** {format_dt(member.created_at, style="F")}\n**Server Join Date:** {format_dt(member.joined_at, style="F")}\n**Join Position:** {sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}\n**Status:** {status_dict[ctx.guild.get_member(member.id).status]}\n**Top Role:** {member.top_role.mention}\n**Roles:** {" ".join([role.mention for role in member.roles if role != ctx.guild.default_role])}",
             color=member.accent_color
         )
         embed.set_author(name=member.name, icon_url=member.avatar.with_format("png"))
@@ -63,17 +55,7 @@ class Info(commands.Cog):
 
         embed = discord.Embed(
             title=f"{guild.name}",
-            description=f"""
-                **Server Name:** {guild.name}
-                **Server Member Count:** {guild.member_count}
-                **Server Creation Date:** {format_dt(guild.created_at, style="F")}
-                **Owner:** {guild.owner.mention}
-                **Text Channel Count:** {len(guild.text_channels)},
-                **Voice Channel Count:** {len(guild.voice_channels)}
-                **Role Count:** {len(guild.roles)}
-                **Verification Level:** {vlevel_dict.get(guild.verification_level)}
-                **Nitro Boost Level:** {boost_dict.get(guild.premium_tier)}
-            """,
+            description=f"**Server Name:** {guild.name}\n**Server Member Count:** {guild.member_count}\n**Server Creation Date:** {format_dt(guild.created_at, style="F")}\n**Owner:** {guild.owner.mention}\n**Text Channel Count:** {len(guild.text_channels)}\n**Voice Channel Count:** {len(guild.voice_channels)}\n**Role Count:** {len(guild.roles)}\n**Verification Level:** {vlevel_dict.get(guild.verification_level)}\n**Nitro Boost Level:** {boost_dict.get(guild.premium_tier)}",
             color=embed_color
         )
 
@@ -88,15 +70,7 @@ class Info(commands.Cog):
         load1, load5, load15 = psutil.getloadavg()
         embed = discord.Embed(
             title=f"{self.bot.user.name}",
-            description=f"""
-                **Bot Name:** {self.bot.user.name}
-                **Server Count:** {len(self.bot.guilds)}
-                **Account Creation Date:** {format_dt(self.bot.user.created_at, style="F")}
-                **Owner:** NatFletch
-                **Latency:** {round(self.bot.latency * 1000)}ms,
-                **CPU Usage:** {round(load15 / os.cpu_count() * 100)}%,
-                **Memory:** {round(psutil.virtual_memory()[3] / 1000000000, 2)} gb / {round(psutil.virtual_memory()[0] / 1000000000, 2)} gb
-            """,
+            description=f"**Bot Name:** {self.bot.user.name}\n**Server Count:** {len(self.bot.guilds)}\n**Account Creation Date:** {format_dt(self.bot.user.created_at, style="F")}\n**Owner:** NatFletch\n**Latency:** {round(self.bot.latency * 1000)}ms\n**CPU Usage:** {round(load15 / os.cpu_count() * 100)}%\n**Memory:** {round(psutil.virtual_memory()[3] / 1000000000, 2)} gb / {round(psutil.virtual_memory()[0] / 1000000000, 2)} gb\n**Python Version:** {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}\n**Discord.py Version:** {discord.__version__}",
             color=embed_color
         )
         embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))

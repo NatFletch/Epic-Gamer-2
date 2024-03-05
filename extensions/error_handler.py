@@ -49,10 +49,8 @@ class CommandErrorHandler(commands.Cog):
             except discord.HTTPException:
                 pass
 
-        # For this error example we check to see where it came from...
-        elif isinstance(error, commands.BadArgument):
-            if ctx.command.qualified_name == 'tag list':  # Check if the command being invoked is 'tag list'
-                await ctx.send('I could not find that member. Please try again.')
+        elif isinstance(error, commands.CommandOnCooldown):
+            await ctx.send(f"This command is on cooldown. Please wait {error.cooldown} seconds")
 
         else:
             # All other Errors not returned come here. And we can just print the default TraceBack.
