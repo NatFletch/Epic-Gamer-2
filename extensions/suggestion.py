@@ -58,7 +58,7 @@ class Suggestions(commands.Cog):
     @commands.hybrid_command(usage="<message>")
     @commands.cooldown(1, 120)
     @commands.guild_only()
-    async def suggest(self, ctx, *, message: str = commands.parameter(default=None, description="The thing you want to suggest")):
+    async def suggest(self, ctx, *, message: str = commands.parameter(description="The thing you want to suggest")):
         """Posts a suggestion in the server suggestions channel"""
         channel_id = await self.shelper.find_suggestion_channel(ctx.guild.id)
         if channel_id is False:

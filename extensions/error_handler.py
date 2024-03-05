@@ -1,6 +1,7 @@
 import discord
 import traceback
 import sys
+from conf import embed_color
 from discord.ext import commands
 
 
@@ -11,15 +12,6 @@ class CommandErrorHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        """The event triggered when an error is raised while invoking a command.
-        Parameters
-        ------------
-        ctx: commands.Context
-            The context used for command invocation.
-        error: commands.CommandError
-            The Exception raised.
-        """
-
         # This prevents any commands with local handlers being handled here in on_command_error.
         if hasattr(ctx.command, 'on_error'):
             return
@@ -32,8 +24,6 @@ class CommandErrorHandler(commands.Cog):
 
         ignored = (commands.CommandNotFound, )
 
-        # Allows us to check for original exceptions raised and sent to CommandInvokeError.
-        # If nothing is found. We keep the exception passed to on_command_error.
         error = getattr(error, 'original', error)
 
         # Anything in ignored will return and prevent anything happening.
@@ -50,12 +40,19 @@ class CommandErrorHandler(commands.Cog):
                 pass
 
         elif isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f"This command is on cooldown. Please wait {error.cooldown} seconds")
+            await ctx.send(f"This command is on cooldown. Please wait {error.cooldown.per} seconds")
 
         else:
             # All other Errors not returned come here. And we can just print the default TraceBack.
             print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
             traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+            error_msg = traceback.format_exception(type(error), error, error.__traceback__)
+            embed = discord.Embed(
+                title="An Unknown Error Has Occured!",
+                description=f"For more help please join the [support server](https://discord.gg/tDYMaz7u9s)!\nTraceback:\n```Ignoring exception in command {ctx.command}: {error_msg}```",
+                color=embed_color)
+            
+            await ctx.send(embed=embed)
 
 
 async def setup(bot):

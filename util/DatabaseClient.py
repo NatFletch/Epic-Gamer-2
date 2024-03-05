@@ -52,10 +52,13 @@ class DatabaseClient:
         print("Creating suggestions table")
         await self.execute("""
             CREATE TABLE suggestions (
-                id serial,
+                id int,
                 discord_message bigint,
                 guild_id bigint
             )
+        """)
+        await self.execute("""
+            CREATE SEQUENCE id INCREMENT BY 1 MAXVALUE 2147483646 START 1 OWNED BY suggestions.guild_id
         """)
 
     async def find_suggestion_table(self):
