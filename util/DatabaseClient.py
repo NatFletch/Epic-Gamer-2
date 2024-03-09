@@ -35,12 +35,8 @@ class DatabaseClient:
 
     async def check_for_tables(self):
         db_client = self
-        suggestions_table = await db_client.find_suggestion_table()
         suggestions_channel_table = await db_client.find_suggestion_channel_table()
         suggestions_allowed_role_table = await db_client.find_staff_roles_table()
-
-        if not suggestions_table.get("to_regclass"):
-            await db_client.create_suggestion_table()
 
         if not suggestions_channel_table.get("to_regclass"):
             await db_client.create_suggestion_channel_table()
@@ -48,24 +44,18 @@ class DatabaseClient:
         if not suggestions_allowed_role_table.get("to_regclass"):
             await db_client.create_staff_roles_table()
 
-    async def create_suggestion_table(self):
-        print("Creating suggestions table")
-        await self.execute("""
-            CREATE TABLE suggestions (
+    async def create_suggestion_table(self, guild_id):
+        print(f"Creating suggestions_{guild_id} table")
+        await self.execute(f"""
+            CREATE TABLE suggestions_{guild_id} (
                 id int,
                 discord_message bigint,
                 guild_id bigint
             )
         """)
-        await self.execute("""
-            CREATE SEQUENCE id INCREMENT BY 1 MAXVALUE 2147483646 START 1 OWNED BY suggestions.guild_id
+        await self.execute(f"""
+            CREATE SEQUENCE suggestion_id_{guild_id} START WITH 1 INCREMENT BY 1 OWNED BY suggestions_{guild_id}.id    
         """)
-
-    async def find_suggestion_table(self):
-        response = await self.fetchrow("""
-            SELECT to_regclass('public.suggestions')
-        """)
-        return dict(response)
 
     async def create_suggestion_channel_table(self):
         print("Creating suggestion_channels table")

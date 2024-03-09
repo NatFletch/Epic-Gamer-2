@@ -24,7 +24,7 @@ def check_if_owner():
     async def predicate(ctx):
         if ctx.author.id == ctx.guild.owner.id:
             return True
-        if ctx.author.id in ctx.bot.owner_ids:
+        if commands.is_owner:
             return True
         return False
     return commands.check(predicate)

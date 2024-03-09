@@ -8,7 +8,7 @@ class SuggestionHelper:
 
     async def insert_new_suggestion(self, guild, message):
         db_client = await self.bot.fetch_db_client()
-        await db_client.execute("INSERT INTO suggestions (guild_id, discord_message) VALUES ($1, $2)", guild, message)
+        await db_client.execute(f"INSERT INTO suggestions_{guild} (id, discord_message) VALUES (nextval('suggestion_id_{guild}'), $1)", message)
 
     async def find_suggestion_channel(self, guild):
         db_client = await self.bot.fetch_db_client()
@@ -20,14 +20,13 @@ class SuggestionHelper:
 
     async def find_suggestion_id(self, message_id, guild_id):
         db_client = await self.bot.fetch_db_client()
-        response = await db_client.fetchrow("SELECT * FROM suggestions WHERE discord_message = $1 AND guild_id = $2",
-                                            message_id, guild_id)
+        response = await db_client.fetchrow(f"SELECT * FROM suggestions_{guild_id} WHERE discord_message = $1",
+                                            message_id)
         return response["id"]
 
     async def find_message_id(self, guild_id, suggestion_id):
         db_client = await self.bot.fetch_db_client()
-        response = await db_client.fetchrow("SELECT * FROM suggestions WHERE id = $1 AND guild_id = $2", suggestion_id,
-                                            guild_id)
+        response = await db_client.fetchrow(f"SELECT * FROM suggestions_{guild_id} WHERE id = $1", suggestion_id)
         return response["discord_message"]
 
     async def get_guild_staff_role(self, guild_id):
@@ -56,10 +55,18 @@ class Suggestions(commands.Cog):
         return commands.check(predicate)
 
     @commands.hybrid_command(usage="<message>")
-    @commands.cooldown(1, 120)
+    @commands.cooldown(1, 120, commands.BucketType.user)
     @commands.guild_only()
     async def suggest(self, ctx, *, message: str = commands.parameter(description="The thing you want to suggest")):
         """Posts a suggestion in the server suggestions channel"""
+        db_client = await self.bot.fetch_db_client()
+        response = await db_client.fetchrow(f"""
+            SELECT to_regclass('public.suggestions_{ctx.guild.id}')
+        """)
+        print(dict(response))
+        if not dict(response).get("to_regclass"):
+            await ctx.send("Creating database table for this server...")
+            await db_client.create_suggestion_table(ctx.guild.id)
         channel_id = await self.shelper.find_suggestion_channel(ctx.guild.id)
         if channel_id is False:
             return await ctx.send(

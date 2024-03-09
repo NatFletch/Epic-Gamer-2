@@ -40,7 +40,7 @@ class CommandErrorHandler(commands.Cog):
                 pass
 
         elif isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f"This command is on cooldown. Please wait {error.cooldown.per} seconds")
+            await ctx.send(f"This command is on cooldown. Please wait {error.retry_after} seconds")
 
         else:
             # All other Errors not returned come here. And we can just print the default TraceBack.
