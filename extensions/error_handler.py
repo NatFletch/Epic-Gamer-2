@@ -1,6 +1,7 @@
 import discord
 import traceback
 import sys
+import math
 from conf import embed_color
 from discord.ext import commands
 
@@ -40,16 +41,15 @@ class CommandErrorHandler(commands.Cog):
                 pass
 
         elif isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f"This command is on cooldown. Please wait {error.retry_after} seconds")
+            await ctx.send(f"This command is on cooldown. Please wait {math.floor(error.retry_after)} seconds")
 
         else:
             # All other Errors not returned come here. And we can just print the default TraceBack.
             print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
             traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-            error_msg = traceback.format_exception(type(error), error, error.__traceback__)
             embed = discord.Embed(
                 title="An Unknown Error Has Occured!",
-                description=f"For more help please join the [support server](https://discord.gg/tDYMaz7u9s)!\nTraceback:\n```Ignoring exception in command {ctx.command}: {error_msg}```",
+                description=f"For more help please join the [support server](https://discord.gg/tDYMaz7u9s)!\nTraceback:\n```{error}```",
                 color=embed_color)
             
             await ctx.send(embed=embed)

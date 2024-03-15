@@ -18,14 +18,14 @@ class Info(commands.Cog):
             member = ctx.author
 
         status_dict = {
-            discord.Status.online: "<:Online:1208304786982572062> Online",
-            discord.Status.dnd: "<:dnd:1208304483994697758> Do Not Disturb",
-            discord.Status.idle: "<:Idle:1208304788455038986> Idle",
-            discord.Status.offline: "<:offline:1208304481033256990> Offline",
+            discord.Status.online: "<:status_online:1216551760089579550> Online",
+            discord.Status.dnd: "<:status_dnd:1216551750740344832> Do Not Disturb",
+            discord.Status.idle: "<:status_idle:1216551753537818644> Idle",
+            discord.Status.offline: "<:status_offline:1216551756784472094> Offline",
         }
         embed = discord.Embed(
             title=f"{member.name}",
-            description=f"**Username:** {member.name}\n**Nickname:** {member.nick}\n**Account Creation Date:** {format_dt(member.created_at, style="F")}\n**Server Join Date:** {format_dt(member.joined_at, style="F")}\n**Join Position:** {sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}\n**Status:** {status_dict[ctx.guild.get_member(member.id).status]}\n**Top Role:** {member.top_role.mention}\n**Roles:** {" ".join([role.mention for role in member.roles if role != ctx.guild.default_role])}",
+            description=f"**Username:** {member.name}\n**Nickname:** {member.nick}\n**Account Creation Date:** {format_dt(member.created_at, style='F')}\n**Server Join Date:** {format_dt(member.joined_at, style='F')}\n**Join Position:** {sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}\n**Status:** {status_dict[ctx.guild.get_member(member.id).status]}\n**Top Role:** {member.top_role.mention}\n**Roles:** {' '.join([role.mention for role in member.roles if role != ctx.guild.default_role])}",
             color=member.accent_color
         )
         embed.set_author(name=member.name, icon_url=member.avatar.with_format("png"))
@@ -55,7 +55,7 @@ class Info(commands.Cog):
 
         embed = discord.Embed(
             title=f"{guild.name}",
-            description=f"**Server Name:** {guild.name}\n**Server Member Count:** {guild.member_count}\n**Server Creation Date:** {format_dt(guild.created_at, style="F")}\n**Owner:** {guild.owner.mention}\n**Text Channel Count:** {len(guild.text_channels)}\n**Voice Channel Count:** {len(guild.voice_channels)}\n**Role Count:** {len(guild.roles)}\n**Verification Level:** {vlevel_dict.get(guild.verification_level)}\n**Nitro Boost Level:** {boost_dict.get(guild.premium_tier)}",
+            description=f'**Server Name:** {guild.name}\n**Server Member Count:** {guild.member_count}\n**Server Creation Date:** {format_dt(guild.created_at, style="F")}\n**Owner:** {guild.owner.mention}\n**Text Channel Count:** {len(guild.text_channels)}\n**Voice Channel Count:** {len(guild.voice_channels)}\n**Role Count:** {len(guild.roles)}\n**Verification Level:** {vlevel_dict.get(guild.verification_level)}\n**Nitro Boost Level:** {boost_dict.get(guild.premium_tier)}',
             color=embed_color
         )
 
@@ -70,7 +70,7 @@ class Info(commands.Cog):
         load1, load5, load15 = psutil.getloadavg()
         embed = discord.Embed(
             title=f"{self.bot.user.name}",
-            description=f"**Bot Name:** {self.bot.user.name}\n**Server Count:** {len(self.bot.guilds)}\n**Account Creation Date:** {format_dt(self.bot.user.created_at, style="F")}\n**Owner:** NatFletch\n**Latency:** {round(self.bot.latency * 1000)}ms\n**CPU Usage:** {round(load15 / os.cpu_count() * 100)}%\n**Memory:** {round(psutil.virtual_memory()[3] / 1000000000, 2)} gb / {round(psutil.virtual_memory()[0] / 1000000000, 2)} gb\n**Python Version:** {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}\n**Discord.py Version:** {discord.__version__}",
+            description=f'**Bot Name:** {self.bot.user.name}\n**Server Count:** {len(self.bot.guilds)}\n**Account Creation Date:** {format_dt(self.bot.user.created_at, style="F")}\n**Owner:** NatFletch\n**Latency:** {round(self.bot.latency * 1000)}ms\n**CPU Usage:** {round(load15 / os.cpu_count() * 100)}%\n**Memory:** {round(psutil.virtual_memory()[3] / 1000000000, 2)} gb / {round(psutil.virtual_memory()[0] / 1000000000, 2)} gb\n**Python Version:** {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}\n**Discord.py Version:** {discord.__version__}',
             color=embed_color
         )
         embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))

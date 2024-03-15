@@ -1,4 +1,5 @@
 discord.py[voice]
+discord.py[speedups]
 asyncpg[speedups]
 aiohttp
 jishaku

@@ -1,4 +1,5 @@
 import discord
+from datetime import datetime
 from discord.ext import commands
 from conf import embed_color
 
@@ -26,10 +27,46 @@ def check_if_owner():
             return True
         if commands.is_owner:
             return True
+        await ctx.send("You do not have permission to run this command!")
         return False
     return commands.check(predicate)
 
+class ConfigSelect(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Staff Role", description="Set the staff role for your server to give permissions to others"),
+            discord.SelectOption(label="Suggestion Channel", description="Set the channel your suggestions will be sent to")
+        ]
+        super().__init__(placeholder="Choose a configuration option", min_values=1, max_values=1, options=options)
+        
+    async def callback(self, interaction):
+        if self.values[0] == "Staff Role":
+            role_select = StaffRoleSelect()
+            await interaction.response.send_message("Please enter your staff role", view=discord.ui.View().add_item(role_select))
+        elif self.values[0] == "Suggestion Channel":
+            channel_select = SuggestionChannelSelect()
+            await interaction.response.send_message("Please enter your suggestion channel", view=discord.ui.View().add_item(channel_select))
 
+class StaffRoleSelect(discord.ui.RoleSelect):
+    def __init__(self):
+        super().__init__(placeholder="Choose your staff role", min_values=1, max_values=1)
+        
+    async def callback(self, interaction):
+        role = self.values[0]
+        chelper = ConfigHelper(interaction.client)
+        await chelper.set_staff_role(interaction.guild_id, role.id)
+        await interaction.response.send_message(f"You have successfully set the staff role to: {role.mention}!", allowed_mentions=discord.AllowedMentions().none())
+        
+class SuggestionChannelSelect(discord.ui.ChannelSelect):
+    def __init__(self):
+        super().__init__(placeholder="Choose your suggestio channel", min_values=1, max_values=1)
+    
+    async def callback(self, interaction):
+        channel = self.values[0]
+        chelper = ConfigHelper(interaction.client)
+        await chelper.set_suggestion_channel(interaction.guild_id, channel.id)
+        await interaction.response.send_message(f"You have successfully set the suggestion channel to: {channel.mention}")
+        
 class Config(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -38,25 +75,16 @@ class Config(commands.Cog):
     @commands.hybrid_command(aliases=["conf", "configure", "settings"], usage="[setting] <option>")
     @commands.guild_only()
     @check_if_owner()
-    async def config(self, ctx, setting: str = commands.parameter(default=None, description="The setting you would like to change"), option: str = commands.parameter(default=None, description="The option for the specific setting")):
+    async def config(self, ctx):
         """Command to change server settings"""
-        if setting == "settings.suggestions.suggestion_channel":
-            converted = await commands.TextChannelConverter().convert(ctx, option)
-            option = converted.id
-            await self.chelper.set_suggestion_channel(ctx.guild.id, option)
-            await ctx.send(f"You have successfully set the suggestions channel to {converted.mention}!")
-        elif setting == "settings.meta.staff_role":
-            converted = await commands.RoleConverter().convert(ctx, option)
-            option = converted.id
-            await self.chelper.set_staff_role(ctx.guild.id, option)
-            await ctx.send(f"You have successfully set the staff role to {converted.mention}!", allowed_mentions=discord.AllowedMentions.none())
-        else:
-            await ctx.send(
-                f"""Unfortunately, I do not recognize {setting}. The allowed settings there are would be:
-                -> settings.meta.staff_role <role>
-                -> settings.meta.admin_role <role>
-                -> settings.suggestions.suggestion_channel <channel>
-                """)
+        embed = discord.Embed(
+            title="Configuration Menu",
+            description="Welcome to the Epic Gamer configuration menu. Here you can change any specific settings related to your server",
+            color=embed_color,
+            timestamp=datetime.now()
+        )
+        await ctx.send(embed=embed, view=discord.ui.View().add_item(ConfigSelect()))
+
 
 
 async def setup(bot):
