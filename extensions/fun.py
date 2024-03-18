@@ -10,9 +10,8 @@ class Fun(commands.Cog):
         self.bot = bot
         
     @commands.hybrid_command(name="8ball", usage="<message>")
-    async def advice(self, ctx, *, message: str = commands.parameter(default=None, description="The message you wish to give to the 8 ball")):
+    async def advice(self, ctx, *, message: str = commands.parameter(description="The message you wish to give to the 8 ball")):
         """Take a shot at the magic 8 ball for advice!"""
-        if message is None: return await ctx.send("You need to provide a message for the 8 ball to answer")
         responses = ["Definitely.", "It is certain.", "Most likely." , "Outlook good.", "Yes.", "You may rely on it.", "Ask again later.",
                      "Better not tell you now.", "My reply is no.", "Signs point to yes.", "Very doubtful.", "Without a doubt.", "Cannot predict now."
                      "Concentrate and ask again.", "It is decidely so.", "My sources say no."]
@@ -47,6 +46,11 @@ class Fun(commands.Cog):
         if number > 1000000:
             number = 6
         await ctx.send(f"Rolling {number} sided dice... rolled: {random.randint(1,number)}")
+        
+    @commands.hybrid_command(aliases=["coin"], usage="")
+    async def flip(self, ctx):
+        """Flips a coin"""
+        await ctx.send(random.choice(["Heads", "Tails"]))
 
 
 async def setup(bot):

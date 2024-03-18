@@ -23,9 +23,30 @@ class Info(commands.Cog):
             discord.Status.idle: "<:status_idle:1216551753537818644> Idle",
             discord.Status.offline: "<:status_offline:1216551756784472094> Offline",
         }
+        
+        public_flag_dict = {
+            "active_developer": "<:active_developer:1216549585804202025>",
+            "bug_hunter": "<:bug_hunter:1216549584252309514>",
+            "bug_hunter_level_2": "<:golden_bug_hunter:1216549591382495293>",
+            "discord_certified_moderator": "<:discord_certified_moderator:1219416662906900561>",
+            "early_supporter": "<:early_supporter:1216549589885128795>",
+            "verified_bot_developer": "<:verified_bot_developer:1216550341395615785>",
+            "hypesquad": "<:hypesquad:1216550334399250522>",
+            "hypesquad_balance": "<:balance:1216549580032708698>",
+            "hypesquad_bravery": "<:bravery:1216549581408571483>",
+            "hypesquad_brilliance": "<:brilliance:1216549582671057056>",
+            "partner": "<:discord_partner:1216549587360419990>",
+            "staff": "<:discord_staff:1216549588693946488>",
+        }
+        
+        flags_list = []
+        for name, value in member.public_flags:
+            if value:
+                flags_list.append(public_flag_dict[name])
+        
         embed = discord.Embed(
             title=f"{member.name}",
-            description=f"**Username:** {member.name}\n**Nickname:** {member.nick}\n**Account Creation Date:** {format_dt(member.created_at, style='F')}\n**Server Join Date:** {format_dt(member.joined_at, style='F')}\n**Join Position:** {sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}\n**Status:** {status_dict[ctx.guild.get_member(member.id).status]}\n**Top Role:** {member.top_role.mention}\n**Roles:** {' '.join([role.mention for role in member.roles if role != ctx.guild.default_role])}",
+            description=f"**Username:** {member.name}\n**Nickname:** {member.nick}\n**Account Creation Date:** {format_dt(member.created_at, style='F')}\n**Server Join Date:** {format_dt(member.joined_at, style='F')}\n**Join Position:** {sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}\n**Status:** {status_dict[ctx.guild.get_member(member.id).status]}\n**Badges:** {''.join(flags_list)}\n**Top Role:** {member.top_role.mention}\n**Roles:** {' '.join([role.mention for role in member.roles if role != ctx.guild.default_role])}",
             color=member.accent_color
         )
         embed.set_author(name=member.name, icon_url=member.avatar.with_format("png"))
@@ -70,7 +91,7 @@ class Info(commands.Cog):
         load1, load5, load15 = psutil.getloadavg()
         embed = discord.Embed(
             title=f"{self.bot.user.name}",
-            description=f'**Bot Name:** {self.bot.user.name}\n**Server Count:** {len(self.bot.guilds)}\n**Account Creation Date:** {format_dt(self.bot.user.created_at, style="F")}\n**Owner:** NatFletch\n**Latency:** {round(self.bot.latency * 1000)}ms\n**CPU Usage:** {round(load15 / os.cpu_count() * 100)}%\n**Memory:** {round(psutil.virtual_memory()[3] / 1000000000, 2)} gb / {round(psutil.virtual_memory()[0] / 1000000000, 2)} gb\n**Python Version:** {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}\n**Discord.py Version:** {discord.__version__}',
+            description=f'**Bot Name:** {self.bot.user.name}\n**Server Count:** {len(self.bot.guilds)}\n**Member Count:** {len(self.bot.users)}\n\n**Account Creation Date:** {format_dt(self.bot.user.created_at, style="F")}\n**Owner:** NatFletch\n\n**Latency:** {round(self.bot.latency * 1000)}ms\n**CPU Usage:** {round(load15 / os.cpu_count() * 100)}%\n**Memory:** {round(psutil.virtual_memory()[3] / 1000000000, 2)} gb / {round(psutil.virtual_memory()[0] / 1000000000, 2)} gb\n\n**Python Version:** {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}\n**Discord.py Version:** {discord.__version__}',
             color=embed_color
         )
         embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))

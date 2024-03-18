@@ -2,6 +2,7 @@ import discord
 import traceback
 import sys
 import math
+from datetime import datetime
 from conf import embed_color
 from discord.ext import commands
 
@@ -49,10 +50,15 @@ class CommandErrorHandler(commands.Cog):
             traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
             embed = discord.Embed(
                 title="An Unknown Error Has Occured!",
-                description=f"For more help please join the [support server](https://discord.gg/tDYMaz7u9s)!\nTraceback:\n```{error}```",
+                description=f"```{error}```",
                 color=embed_color)
             
             await ctx.send(embed=embed)
+        embed = discord.Embed(title="An Error Has Occured!",
+                              description="For more help please join the [support server](https://discord.gg/tDYMaz7u9s)!",
+                              color=0xff0000,
+                              timestamp=datetime.now())
+        await ctx.send(embed=embed)
 
 
 async def setup(bot):
