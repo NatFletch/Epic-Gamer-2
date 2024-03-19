@@ -44,10 +44,12 @@ class Info(commands.Cog):
             if value:
                 flags_list.append(public_flag_dict[name])
         
+        fetched_member = await self.bot.fetch_user(member.id)
+        
         embed = discord.Embed(
             title=f"{member.name}",
             description=f"**Username:** {member.name}\n**Nickname:** {member.nick}\n**Account Creation Date:** {format_dt(member.created_at, style='F')}\n**Server Join Date:** {format_dt(member.joined_at, style='F')}\n**Join Position:** {sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}\n**Status:** {status_dict[ctx.guild.get_member(member.id).status]}\n**Badges:** {''.join(flags_list)}\n**Top Role:** {member.top_role.mention}\n**Roles:** {' '.join([role.mention for role in member.roles if role != ctx.guild.default_role])}",
-            color=member.accent_color
+            color=fetched_member.accent_color
         )
         embed.set_author(name=member.name, icon_url=member.avatar.with_format("png"))
         embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))
