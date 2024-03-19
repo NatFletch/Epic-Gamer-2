@@ -93,7 +93,7 @@ class Info(commands.Cog):
         load1, load5, load15 = psutil.getloadavg()
         embed = discord.Embed(
             title=f"{self.bot.user.name}",
-            description=f'**Bot Name:** {self.bot.user.name}\n**Server Count:** {len(self.bot.guilds)}\n**Member Count:** {len(self.bot.users)}\n\n**Account Creation Date:** {format_dt(self.bot.user.created_at, style="F")}\n**Owner:** NatFletch\n\n**Latency:** {round(self.bot.latency * 1000)}ms\n**CPU Usage:** {round(load15 / os.cpu_count() * 100)}%\n**Memory:** {round(psutil.virtual_memory()[3] / 1000000000, 2)} gb / {round(psutil.virtual_memory()[0] / 1000000000, 2)} gb\n\n**Python Version:** {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}\n**Discord.py Version:** {discord.__version__}',
+            description=f'**Bot Name:** {self.bot.user.name}\n**Server Count:** {len(self.bot.guilds)}\n**Member Count:** {len(self.bot.users)}\n\n**Account Creation Date:** {format_dt(self.bot.user.created_at, style="F")}\n**Owner:** NatFletch\n\n**Latency:** {round(self.bot.latency * 1000)}ms\n**CPU Usage:** {round(load15 / os.cpu_count() * 100)}%\n**Memory:** {round(psutil.virtual_memory()[3] / 1000000000, 2)} gb / {round(psutil.virtual_memory()[0] / 1000000000, 2)} gb\n\n**Python Version:** {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}\n**Discord.py Version:** {discord.__version__}\n\nThis bot currently has 814 lines of code and on going!',
             color=embed_color
         )
         embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))
