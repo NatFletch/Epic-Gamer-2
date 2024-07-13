@@ -9,16 +9,18 @@ class ConfigHelper:
         self.bot = bot
 
     async def set_suggestion_channel(self, guild_id, channel_id):
-        db_client = await self.bot.fetch_db_client()
-        if await db_client.fetchrow("SELECT * FROM suggestion_channels WHERE guild_id = $1", guild_id) is not None:
-            return await db_client.execute("UPDATE suggestion_channels SET channel_id = $1 WHERE guild_id = $2", channel_id, guild_id)
-        await db_client.execute("INSERT INTO suggestion_channels (guild_id, channel_id) VALUES ($1, $2)", guild_id, channel_id)
+        if await self.bot.db_client.fetchrow("SELECT * FROM suggestion_channels WHERE guild_id = $1", guild_id) is not None:
+            self.bot.cache.set_suggestion_channel_cache(guild_id, channel_id)
+            return await self.bot.db_client.execute("UPDATE suggestion_channels SET channel_id = $1 WHERE guild_id = $2", channel_id, guild_id)
+        self.bot.cache.set_suggestion_channel_cache(guild_id, channel_id)
+        await self.bot.db_client.execute("INSERT INTO suggestion_channels (guild_id, channel_id) VALUES ($1, $2)", guild_id, channel_id)
 
     async def set_staff_role(self, guild_id, role_id):
-        db_client = await self.bot.fetch_db_client()
-        if await db_client.fetchrow("SELECT * FROM staff_roles WHERE guild_id = $1", guild_id) is not None:
-            return await db_client.execute("UPDATE staff_roles SET role_id = $1 WHERE guild_id = $2", role_id, guild_id)
-        await db_client.execute("INSERT INTO staff_roles (guild_id, role_id) VALUES ($1, $2)", guild_id, role_id)
+        if await self.bot.db_client.fetchrow("SELECT * FROM staff_roles WHERE guild_id = $1", guild_id) is not None:
+            self.bot.cache.set_staff_cache(guild_id, role_id)
+            return await self.bot.db_client.execute("UPDATE staff_roles SET role_id = $1 WHERE guild_id = $2", role_id, guild_id)
+        self.bot.cache.set_staff_cache(guild_id, role_id)
+        await self.bot.db_client.execute("INSERT INTO staff_roles (guild_id, role_id) VALUES ($1, $2)", guild_id, role_id)
 
 
 def check_if_owner():
