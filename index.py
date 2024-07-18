@@ -3,10 +3,10 @@ import asyncpg
 import os
 import tracemalloc
 
-from conf import token, database_url
+from conf import token, database_url, embed_color
 from util.cache import EpicCache
 from discord.ext import commands
-from util.DatabaseClient import DatabaseClient
+from util.DatabaseClient import EpicDatabaseClient
 
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 tracemalloc.start()
@@ -21,6 +21,7 @@ class EpicGamer(commands.Bot):
             activity=discord.Activity(type=discord.ActivityType.listening, name="e/help")
         )
         self.cache = EpicCache(self)
+        self.color = embed_color
 
     async def on_ready(self):
         # Cool message for startup
@@ -31,7 +32,7 @@ class EpicGamer(commands.Bot):
     @staticmethod
     async def fetch_db_client():
         connection = await asyncpg.connect(database_url)
-        return DatabaseClient(connection)
+        return EpicDatabaseClient(connection)
 
     async def setup_hook(self):
         # Setup the database, if it isn't already setup

@@ -1,6 +1,5 @@
 import discord
 import os
-import conf
 from discord.ext import commands
 
 
@@ -30,7 +29,7 @@ class Developer(commands.Cog):
     async def embed(self, ctx, channel, title, description, color=None):
         """Posts in embed in a given channel"""
         if color is None:
-            color = conf.embed_color
+            color = self.bot.color
 
         channel = await commands.TextChannelConverter().convert(ctx, channel)
         
@@ -52,16 +51,14 @@ class Developer(commands.Cog):
     @commands.is_owner()
     async def execute_db(self, ctx, *, string):
         """Performs any action to the database"""
-        db_client = await self.bot.fetch_db_client()
-        message = await db_client.execute(string)
+        message = await self.bot.db_client.execute(string)
         await ctx.send(message)
 
     @commands.command(usage="<string>")
     @commands.is_owner()
     async def fetch_db(self, ctx, *, string):
         """Performs any action to the database"""
-        db_client = await self.bot.fetch_db_client()
-        message = await db_client.fetchrow(string)
+        message = await self.bot.db_client.fetchrow(string)
         await ctx.send(message)
 
     @commands.command(usage="")

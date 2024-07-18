@@ -2,7 +2,6 @@ import discord
 import random
 import aiohttp
 from discord.ext import commands
-from conf import embed_color
 
 
 class Fun(commands.Cog):
@@ -27,7 +26,7 @@ class Fun(commands.Cog):
                 async with session.get(f"https://meme-api.com/gimme/{random.choice(subreddits)}") as response:
                     json = await response.json(content_type=None)
 
-                    embed = discord.Embed(title=json.get("title"), color=embed_color)
+                    embed = discord.Embed(title=json.get("title"), color=self.bot.color)
                     embed.set_image(url=json["url"])
                     embed.set_author(name=f"u/"+json["author"])
                     embed.set_footer(text="r/" + json["subreddit"])

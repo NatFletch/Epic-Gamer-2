@@ -3,7 +3,6 @@ import traceback
 import sys
 import math
 from datetime import datetime
-from conf import embed_color
 from discord.ext import commands
 
 
@@ -14,17 +13,8 @@ class CommandErrorHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        # This prevents any commands with local handlers being handled here in on_command_error.
-        if hasattr(ctx.command, 'on_error'):
-            return
 
-        # This prevents any cogs with an overwritten cog_command_error being handled here.
-        cog = ctx.cog
-        if cog:
-            if cog._get_overridden_method(cog.cog_command_error) is not None:
-                return
-
-        ignored = (commands.CommandNotFound, )
+        ignored = (commands.CommandNotFound)
 
         error = getattr(error, 'original', error)
 
@@ -51,11 +41,10 @@ class CommandErrorHandler(commands.Cog):
             embed = discord.Embed(
                 title="An Unknown Error Has Occured!",
                 description=f"```{error}```",
-                color=embed_color)
+                color=self.bot.color)
             
             await ctx.send(embed=embed)
-        embed = discord.Embed(title="An Error Has Occured!",
-                              description="For more help please join the [support server](https://discord.gg/tDYMaz7u9s)!",
+        embed = discord.Embed(description="For more help please join the [support server](https://discord.gg/tDYMaz7u9s)!",
                               color=0xff0000,
                               timestamp=datetime.now())
         await ctx.send(embed=embed)

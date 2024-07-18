@@ -1,7 +1,6 @@
 import discord
 from datetime import datetime
 from discord.ext import commands
-from conf import embed_color
 
 
 class ConfigHelper:
@@ -82,7 +81,7 @@ class Config(commands.Cog):
         embed = discord.Embed(
             title="Configuration Menu",
             description="Welcome to the Epic Gamer configuration menu. Here you can change any specific settings related to your server",
-            color=embed_color,
+            color=self.bot.color,
             timestamp=datetime.now()
         )
         await ctx.send(embed=embed, view=discord.ui.View().add_item(ConfigSelect()))

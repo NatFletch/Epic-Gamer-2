@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from conf import embed_color
 
 
 class EpicHelpCommand(commands.MinimalHelpCommand):
@@ -18,7 +17,7 @@ class EpicHelpCommand(commands.MinimalHelpCommand):
         embed = discord.Embed(
             title=f"{self.context.bot.user.name} Help Command",
             description="**Categories**",
-            color=embed_color)
+            color=self.bot.color)
         embed.set_footer(text=self.get_ending_note())
 
         for cog, _commands in mapping.items():
@@ -31,7 +30,7 @@ class EpicHelpCommand(commands.MinimalHelpCommand):
 
     async def send_cog_help(self, cog):
         destination = self.get_destination()
-        embed = discord.Embed(title=f"{cog.qualified_name} Help", color=embed_color)
+        embed = discord.Embed(title=f"{cog.qualified_name} Help", color=self.bot.color)
         filtered_list = await self.filter_commands(cog.get_commands(), sort=True)
         command_list = "\n".join([f"`{self.get_command_signature(command)}`" for command in filtered_list])
         embed.description = f"Use `{self.context.clean_prefix}help [command]` for more info on a command.\nYou can also use `{self.context.clean_prefix}help [category]` for more info on a category.\n\n**{cog.qualified_name} Commands**\n{command_list}"
@@ -41,7 +40,7 @@ class EpicHelpCommand(commands.MinimalHelpCommand):
     async def send_group_help(self, command):
         """Group help and command help logic in one function"""
         destination = self.get_destination()
-        embed = discord.Embed(title=f"{self.context.clean_prefix}{command.qualified_name}", color=embed_color)
+        embed = discord.Embed(title=f"{self.context.clean_prefix}{command.qualified_name}", color=self.bot.color)
         alias_help = "No Aliases"
 
         if len(command.aliases) > 0:
