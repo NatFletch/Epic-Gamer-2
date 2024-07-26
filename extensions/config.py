@@ -1,5 +1,6 @@
 import discord
 from datetime import datetime
+from discord import app_commands
 from discord.ext import commands
 
 
@@ -7,7 +8,7 @@ class ConfigHelper:
     def __init__(self, bot):
         self.bot = bot
 
-    async def set_suggestion_channel(self, guild_id, channel_id):
+    async def set_suggestion_channel(self, guild_id: float, channel_id: float):
         if await self.bot.db_client.fetchrow("SELECT * FROM suggestion_channels WHERE guild_id = $1", guild_id) is not None:
             self.bot.cache.set_suggestion_channel_cache(guild_id, channel_id)
             return await self.bot.db_client.execute("UPDATE suggestion_channels SET channel_id = $1 WHERE guild_id = $2", channel_id, guild_id)
@@ -73,10 +74,10 @@ class Config(commands.Cog):
         self.bot = bot
         self.chelper = ConfigHelper(self.bot)
 
-    @commands.hybrid_command(aliases=["conf", "configure", "settings"], usage="[setting] <option>")
+    @app_commands.command()
     @commands.guild_only()
     @check_if_owner()
-    async def config(self, ctx):
+    async def config(self, interaction: discord.Interaction):
         """Command to change server settings"""
         embed = discord.Embed(
             title="Configuration Menu",
@@ -84,7 +85,7 @@ class Config(commands.Cog):
             color=self.bot.color,
             timestamp=datetime.now()
         )
-        await ctx.send(embed=embed, view=discord.ui.View().add_item(ConfigSelect()))
+        await interaction.response.send_message(embed=embed, view=discord.ui.View().add_item(ConfigSelect()))
 
 
 

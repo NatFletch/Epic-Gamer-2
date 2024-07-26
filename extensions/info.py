@@ -1,7 +1,9 @@
 import discord
+import typing
 import sys
 import psutil
 import os
+from discord import app_commands
 from discord.ext import commands
 from discord.utils import format_dt
 
@@ -10,11 +12,14 @@ class Info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(aliases=["uinfo", "ui", "user-info"], usage="[member]")
-    async def userinfo(self, ctx, member: discord.Member = commands.parameter(default=None, description="The user you would like to find info on")):
+    @app_commands.command()
+    @app_commands.describe(member = "The user you want info on")
+    @discord.app_commands.allowed_installs(users=False, guilds=True)
+    @discord.app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
+    async def userinfo(self, interaction: discord.Interaction, member: typing.Union[discord.Member, discord.User]= None):
         """Fetches info for a given user or on yourself"""
         if not member:
-            member = ctx.author
+            member = interaction.user
 
         status_dict = {
             discord.Status.online: "<:status_online:1216551760089579550> Online",
@@ -47,18 +52,31 @@ class Info(commands.Cog):
         
         embed = discord.Embed(
             title=f"{member.name}",
-            description=f"**Username:** {member.name}\n**Nickname:** {member.nick}\n**Account Creation Date:** {format_dt(member.created_at, style='F')}\n**Server Join Date:** {format_dt(member.joined_at, style='F')}\n**Join Position:** {sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}\n**Status:** {status_dict[ctx.guild.get_member(member.id).status]}\n**Badges:** {''.join(flags_list)}\n**Top Role:** {member.top_role.mention}\n**Roles:** {' '.join([role.mention for role in member.roles if role != ctx.guild.default_role])}",
             color=fetched_member.accent_color
         )
         embed.set_author(name=member.name, icon_url=member.avatar.with_format("png"))
-        embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))
+        embed.set_footer(text=interaction.user.name, icon_url=interaction.user.avatar.with_format("png"))
         embed.set_thumbnail(url=member.avatar.with_format("png"))
-        await ctx.send(embed=embed)
+        
+        embed.add_field(name="Username", value=member.name)
+        embed.add_field(name="Nickname", value=member.display_name)
+        embed.add_field(name="Account Creation Date", value=format_dt(member.created_at, style='F'))
+        embed.add_field(name="Badges", value="".join(flags_list))
+        if type(member) is discord.Member:
+            embed.add_field(name="Server Join Date", value=format_dt(member.joined_at, style='F'))
+            embed.add_field(name="Join Position", value=sorted(interaction.guild.members, key=lambda member: member.joined_at).index(member) + 1)
+            embed.add_field(name="Top Role", value=member.top_role.mention)
+            embed.add_field(name="Status", value=status_dict[interaction.guild.get_member(member.id).status])
+            embed.add_field(name="Roles", value=' '.join([role.mention for role in member.roles if role != interaction.guild.default_role]))
+        await interaction.response.send_message(embed=embed)
 
-    @commands.hybrid_command(aliases=["sinfo"], usage="")
-    async def serverinfo(self, ctx: commands.Context):
+    @app_commands.command()
+    @commands.guild_only()
+    @discord.app_commands.allowed_installs(users=True, guilds=True)
+    @discord.app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
+    async def serverinfo(self, interaction: discord.Interaction):
         """Fetches info on the current server"""
-        guild = ctx.guild
+        guild = interaction.guild
 
         vlevel_dict = {
             discord.VerificationLevel.none: "None",
@@ -77,31 +95,54 @@ class Info(commands.Cog):
 
         embed = discord.Embed(
             title=f"{guild.name}",
-            description=f'**Server Name:** {guild.name}\n**Server Member Count:** {guild.member_count}\n**Server Creation Date:** {format_dt(guild.created_at, style="F")}\n**Owner:** {guild.owner.mention}\n**Text Channel Count:** {len(guild.text_channels)}\n**Voice Channel Count:** {len(guild.voice_channels)}\n**Role Count:** {len(guild.roles)}\n**Verification Level:** {vlevel_dict.get(guild.verification_level)}\n**Nitro Boost Level:** {boost_dict.get(guild.premium_tier)}',
             color=self.bot.color
         )
 
         if not (icon := guild.icon): icon = self.bot.user.avatar
         embed.set_author(name=guild.name, icon_url=icon.with_format("png"))
-        embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))
-        await ctx.send(embed=embed)
+        embed.set_footer(text=interaction.user.name, icon_url=interaction.user.avatar.with_format("png"))
+        
+        embed.add_field(name="Server Name", value=guild.name)
+        embed.add_field(name="Member Count", value=guild.member_count)
+        embed.add_field(name="Created At", value=format_dt(guild.created_at, style='F'))
+        embed.add_field(name="Owner", value=guild.owner.mention)
+        embed.add_field(name="Text Channel Count", value=len(guild.text_channels))
+        embed.add_field(name="Voice Channel Count", value=len(guild.voice_channels))
+        embed.add_field(name="Role Count", value=len(guild.roles))
+        embed.add_field(name="Verification Level", value=vlevel_dict.get(guild.verification_level))
+        embed.add_field(name="Nitro Boost Level", value=boost_dict.get(guild.premium_tier))
+        await interaction.response.send_message(embed=embed)
 
-    @commands.hybrid_command(aliases=["stats"], usage="")
-    async def statistics(self, ctx):
+    @app_commands.command()
+    @discord.app_commands.allowed_installs(users=True, guilds=True)
+    @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def statistics(self, interaction: discord.Interaction):
         """Provides some stats on the bot"""
         load1, load5, load15 = psutil.getloadavg()
         embed = discord.Embed(
             title=f"{self.bot.user.name}",
-            description=f'**Bot Name:** {self.bot.user.name}\n**Server Count:** {len(self.bot.guilds)}\n**Member Count:** {len(self.bot.users)}\n\n**Account Creation Date:** {format_dt(self.bot.user.created_at, style="F")}\n**Owner:** NatFletch\n\n**Latency:** {round(self.bot.latency * 1000)}ms\n**CPU Usage:** {round(load15 / os.cpu_count() * 100)}%\n**Memory:** {round(psutil.virtual_memory()[3] / 1000000000, 2)} gb / {round(psutil.virtual_memory()[0] / 1000000000, 2)} gb\n\n**Python Version:** {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}\n**Discord.py Version:** {discord.__version__}\n\nThis bot currently has 814 lines of code and on going!',
             color=self.bot.color
         )
-        embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar.with_format("png"))
-        await ctx.send(embed=embed)
+        embed.set_footer(text=interaction.user.name, icon_url=interaction.user.avatar.with_format("png"))
+        
+        embed.add_field(name="Bot Name", value=self.bot.user.name)
+        embed.add_field(name="Server Count", value=len(self.bot.guilds))
+        embed.add_field(name="Member Count", value=len(self.bot.users))
+        embed.add_field(name="Account Creation Date", value=format_dt(self.bot.user.created_at, style="F"))
+        embed.add_field(name="Owner", value="NatFletch")
+        embed.add_field(name="Latency", value=f"{round(self.bot.latency * 1000)}ms")
+        embed.add_field(name="CPU Usage", value=f"{round(load15 / os.cpu_count() * 100)}%")
+        embed.add_field(name="Memory", value=f"{round(psutil.virtual_memory()[3] / 1000000000, 2)} GB / {round(psutil.virtual_memory()[0] / 1000000000, 2)} GB")
+        embed.add_field(name="Python Version", value=f"{sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}")
+        embed.add_field(name="Discord.py Version", value=discord.__version__)
+        await interaction.response.send_message(embed=embed)
 
-    @commands.hybrid_command(aliases=["latency"], usage="")
-    async def ping(self, ctx):
+    @app_commands.command()
+    @discord.app_commands.allowed_installs(users=True, guilds=True)
+    @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def ping(self, interaction: discord.Interaction):
         """Shows the bot's current latency"""
-        await ctx.send(f"Pong! {round(self.bot.latency * 1000)}ms")
+        await interaction.response.send_message(f"Pong! {round(self.bot.latency * 1000)}ms")
 
 
 async def setup(bot):

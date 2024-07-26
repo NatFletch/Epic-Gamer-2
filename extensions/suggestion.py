@@ -1,18 +1,18 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 
 
 class SuggestionHelper:
-    def __init__(self, bot):
-        self.bot = bot
-        self.suggestion_channel_cache = {}
+    def __init__(self, bot: commands.Bot):
+        self.bot: commands.Bot = bot
 
-    async def insert_new_suggestion(self, guild, message):
-        id = await self.bot.db_client.fetchrow(f"INSERT INTO suggestions_{guild} (id, discord_message) VALUES (nextval('suggestion_id_{guild}'), $1) RETURNING id", message)
+    async def insert_new_suggestion(self, guild: float, message: float):
+        id: int = await self.bot.db_client.fetchrow(f"INSERT INTO suggestions_{guild} (id, discord_message) VALUES (nextval('suggestion_id_{guild}'), $1) RETURNING id", message)
         self.bot.cache.set_suggestion_message_cache(id, message)
         return id
 
-    async def find_suggestion_channel(self, guild):
+    async def find_suggestion_channel(self, guild: float):
         # Check if channel is already cached
         if self.bot.cache.check_suggestion_channel_cache(guild) == True:
             return self.bot.cache.get_suggestion_channel_cache(guild)
@@ -59,48 +59,41 @@ class Suggestions(commands.Cog):
 
         return commands.check(predicate)
 
-    @commands.hybrid_command(usage="<message>")
+    @app_commands.command()
+    @app_commands.describe(message = "The suggestion you want to post")
     @commands.cooldown(1, 120, commands.BucketType.user)
-    @commands.guild_only()
-    async def suggest(self, ctx, *, message: str = commands.parameter(description="The thing you want to suggest")):
+    async def suggest(self, interaction: discord.Interaction, *, message: str):
         """Posts a suggestion in the server suggestions channel"""
         await self.bot.db_client.execute(f"""
-                CREATE TABLE IF NOT EXISTS suggestions_{ctx.guild.id} (id int, discord_message bigint, guild_id bigint);
-                CREATE SEQUENCE IF NOT EXISTS suggestion_id_{ctx.guild.id} START WITH 1 INCREMENT BY 1 OWNED BY suggestions_{ctx.guild.id}.id;""")
+                CREATE TABLE IF NOT EXISTS suggestions_{interaction.guild.id} (id int, discord_message bigint, guild_id bigint);
+                CREATE SEQUENCE IF NOT EXISTS suggestion_id_{interaction.guild.id} START WITH 1 INCREMENT BY 1 OWNED BY suggestions_{interaction.guild.id}.id;""")
         
-        channel_id = await self.SuggestionHelper.find_suggestion_channel(ctx.guild.id)
+        channel_id = await self.SuggestionHelper.find_suggestion_channel(interaction.guild.id)
 
         if channel_id is False:
-            return await ctx.send(
+            return await interaction.response.send_message(
                 "No suggestion channel configured for this server. Have your server owner run the command `/config` to set it up")
 
         channel = self.bot.get_channel(channel_id)
         discord_message = await channel.send("\u200b")
-        suggestion_id = await self.SuggestionHelper.insert_new_suggestion(ctx.guild.id, discord_message.id)
+        suggestion_id = await self.SuggestionHelper.insert_new_suggestion(interaction.guild.id, discord_message.id)
         embed = discord.Embed(title=f"Suggestion #{suggestion_id["id"]}", description=message, color=0x000000)
-        embed.set_footer(text=f"Sent by {ctx.author}", icon_url=ctx.author.avatar.with_format("png"))
+        embed.set_footer(text=f"Sent by {interaction.user.name}", icon_url=interaction.user.avatar.with_format("png"))
         await discord_message.edit(embed=embed)
-        await ctx.send(f"Suggestion #{suggestion_id["id"]} successfully posted!")
+        await interaction.response.send_message(f"Suggestion #{suggestion_id["id"]} successfully posted!")
         await discord_message.add_reaction('\U0001f44d')
         await discord_message.add_reaction('\U0001f44e')
 
-    @commands.hybrid_group(usage="")
-    @commands.guild_only()
+    @app_commands.command()
+    @app_commands.describe(id="The suggestion ID", reason="The reason behind your decision")
     @check_if_staff()
-    async def suggestion(self, ctx):
-        """The group that manages the suggestion moderation commands"""
-        await ctx.send("You need to supply a sub command eg: `/suggestion accept`, `/suggestion consider` `/suggestion deny`")
-
-    @suggestion.command(usage="<id> [reason]")
-    @commands.guild_only()
-    @check_if_staff()
-    async def accept(self, ctx, id: int = commands.parameter(description="The suggestion id"), *, reason: str=commands.parameter(default=None, description="The description for your decision")):
+    async def suggestion_accept(self, interaction: discord.Interaction, id: int, *, reason: str=None):
         """Accepts a suggestion"""
         if not reason:
             reason = "No reason specified"
 
-        message_id = await self.SuggestionHelper.find_message_id(ctx.guild.id, int(id))
-        channel_id = await self.SuggestionHelper.find_suggestion_channel(ctx.guild.id)
+        message_id = await self.SuggestionHelper.find_message_id(interaction.guild.id, int(id))
+        channel_id = await self.SuggestionHelper.find_suggestion_channel(interaction.guild.id)
         channel = self.bot.get_channel(channel_id)
         message = await channel.fetch_message(int(message_id))
         embed = message.embeds[0]
@@ -110,19 +103,19 @@ class Suggestions(commands.Cog):
         except IndexError:
             pass
 
-        embed.add_field(name=f"Suggestion Accepted By {ctx.author.name}", value=reason)
+        embed.add_field(name=f"Suggestion Accepted By {interaction.user.name}", value=reason)
         await message.edit(content="\u00A0", embed=embed)
-        await ctx.send("Suggestion successfully approved")
+        await interaction.response.send_message("Suggestion successfully approved")
 
-    @suggestion.command(usage="<id> [reason]")
-    @commands.guild_only()
+    @app_commands.command()
+    @app_commands.describe(id="The suggestion ID", reason="The reason behind your decision")
     @check_if_staff()
-    async def deny(self, ctx, id: int = commands.parameter(description="The suggestion id"), *, reason: str=commands.parameter(default=None, description="The description for your decision")):
+    async def suggestion_deny(self, interaction: discord.Interaction, id: int, *, reason: str=None):
         """Denies a suggestion"""
         if not reason:
             reason = "No reason specified"
-        message_id = await self.SuggestionHelper.find_message_id(ctx.guild.id, int(id))
-        channel_id = await self.SuggestionHelper.find_suggestion_channel(ctx.guild.id)
+        message_id = await self.SuggestionHelper.find_message_id(interaction.guild.id, int(id))
+        channel_id = await self.SuggestionHelper.find_suggestion_channel(interaction.guild.id)
         channel = self.bot.get_channel(channel_id)
         message = await channel.fetch_message(int(message_id))
         embed = message.embeds[0]
@@ -131,19 +124,19 @@ class Suggestions(commands.Cog):
             embed.remove_field(0)
         except IndexError:
             pass
-        embed.add_field(name=f"Suggestion Denied By {ctx.author.name}", value=reason)
+        embed.add_field(name=f"Suggestion Denied By {interaction.user.name}", value=reason)
         await message.edit(content="\u00A0", embed=embed)
-        await ctx.send("Suggestion successfully denied")
+        await interaction.response.send_message("Suggestion successfully denied")
 
-    @suggestion.command(usage="<id> [reason]")
-    @commands.guild_only()
+    @app_commands.command()
+    @app_commands.describe(id="The suggestion ID", reason="The reason behind your decision")
     @check_if_staff()
-    async def consider(self, ctx, id: int = commands.parameter(description="The suggestion id"), *, reason: str=commands.parameter(default=None, description="The description for your decision")):
+    async def suggestion_consider(self, interaction: discord.Interaction, id: int, *, reason: str=None):
         """Considers a suggestion"""
         if not reason:
             reason = "No reason specified"
-        message_id = await self.SuggestionHelper.find_message_id(ctx.guild.id, int(id))
-        channel_id = await self.SuggestionHelper.find_suggestion_channel(ctx.guild.id)
+        message_id = await self.SuggestionHelper.find_message_id(interaction.guild.id, int(id))
+        channel_id = await self.SuggestionHelper.find_suggestion_channel(interaction.guild.id)
         channel = self.bot.get_channel(channel_id)
         message = await channel.fetch_message(int(message_id))
         embed = message.embeds[0]
@@ -152,9 +145,9 @@ class Suggestions(commands.Cog):
             embed.remove_field(0)
         except IndexError:
             pass
-        embed.add_field(name=f"Suggestion Considered By {ctx.author.name}", value=reason)
+        embed.add_field(name=f"Suggestion Considered By {interaction.user.name}", value=reason)
         await message.edit(content="\u00A0", embed=embed)
-        await ctx.send("Suggestion successfully considered")
+        await interaction.response.send_message("Suggestion successfully considered")
 
 
 async def setup(bot):

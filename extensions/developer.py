@@ -4,8 +4,8 @@ from discord.ext import commands
 
 
 class Developer(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: commands.Bot):
+        self.bot: commands.Bot = bot
 
     @commands.command(usage="")
     @commands.is_owner()
@@ -13,6 +13,15 @@ class Developer(commands.Cog):
         """Syncs command tree"""
         await self.bot.tree.sync()
         await ctx.send("Successfully synced command tree")
+        
+    @commands.command()
+    @commands.is_owner()
+    async def guildsync(self, ctx: commands.Context):
+        """Syncs command tree to EGS"""
+        converter = commands.GuildConverter()
+        egs = await converter.convert(ctx, str(1208180699983519744))
+        await self.bot.tree.sync(guild=egs)
+        await ctx.send("Successfully synced comamnd tree to EGS")
     
     @commands.command(aliases=["reloadall", "reall"], usage="")
     @commands.is_owner()
