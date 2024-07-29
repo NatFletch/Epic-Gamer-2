@@ -41,23 +41,20 @@ class SuggestionHelper:
             return response["role_id"]
         else:
             return False
+        
+    async def suggestion_check(self, interaction: discord.Interaction):
+        role_id = await self.get_guild_staff_role(interaction.guild.id)
+        author_roles = [role.id for role in interaction.user.roles]
+
+        if role_id not in author_roles or interaction.user.id != 598325949808771083:
+            return await interaction.response.send_message("You must be a staff member to moderate this suggestion.")
 
 
 class Suggestions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.SuggestionHelper = SuggestionHelper(self.bot)
-
-    @staticmethod
-    def check_if_staff():
-        async def predicate(ctx):
-            role_id = await ctx.cog.SuggestionHelper.get_guild_staff_role(ctx.guild.id)
-            author_roles = [role.id for role in ctx.author.roles]
-
-            if role_id in author_roles or ctx.author.id == ctx.guild.owner.id or ctx.author.id in ctx.bot.owner_ids:
-                return True
-
-        return commands.check(predicate)
+        
 
     @app_commands.command()
     @app_commands.describe(message = "The suggestion you want to post")
@@ -86,9 +83,14 @@ class Suggestions(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(id="The suggestion ID", reason="The reason behind your decision")
-    @check_if_staff()
     async def suggestion_accept(self, interaction: discord.Interaction, id: int, *, reason: str=None):
         """Accepts a suggestion"""
+        await self.SuggestionHelper.suggestion_check(interaction)
+        channel_id = await self.SuggestionHelper.find_suggestion_channel(interaction.guild.id)
+        if channel_id is False:
+            return await interaction.response.send_message(
+                "No suggestion channel configured for this server. Have your server owner run the command `/config` to set it up")
+            
         if not reason:
             reason = "No reason specified"
 
@@ -109,9 +111,13 @@ class Suggestions(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(id="The suggestion ID", reason="The reason behind your decision")
-    @check_if_staff()
     async def suggestion_deny(self, interaction: discord.Interaction, id: int, *, reason: str=None):
         """Denies a suggestion"""
+        await self.SuggestionHelper.suggestion_check(interaction)
+        channel_id = await self.SuggestionHelper.find_suggestion_channel(interaction.guild.id)
+        if channel_id is False:
+            return await interaction.response.send_message(
+                "No suggestion channel configured for this server. Have your server owner run the command `/config` to set it up")
         if not reason:
             reason = "No reason specified"
         message_id = await self.SuggestionHelper.find_message_id(interaction.guild.id, int(id))
@@ -130,9 +136,13 @@ class Suggestions(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(id="The suggestion ID", reason="The reason behind your decision")
-    @check_if_staff()
     async def suggestion_consider(self, interaction: discord.Interaction, id: int, *, reason: str=None):
         """Considers a suggestion"""
+        await self.SuggestionHelper.suggestion_check(interaction)
+        channel_id = await self.SuggestionHelper.find_suggestion_channel(interaction.guild.id)
+        if channel_id is False:
+            return await interaction.response.send_message(
+                "No suggestion channel configured for this server. Have your server owner run the command `/config` to set it up")
         if not reason:
             reason = "No reason specified"
         message_id = await self.SuggestionHelper.find_message_id(interaction.guild.id, int(id))

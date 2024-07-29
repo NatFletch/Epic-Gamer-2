@@ -24,5 +24,5 @@ class EpicDatabaseClient:
             CREATE TABLE IF NOT EXISTS suggestion_channels (guild_id bigint, channel_id bigint);
             CREATE TABLE IF NOT EXISTS staff_roles (guild_id bigint, role_id bigint);
             CREATE TABLE IF NOT EXISTS admin_roles (guild_id bigint, role_id bigint);
-            CREATE TABLE IF NOT EXISTS money (user_id bigint, money int);
+            CREATE TABLE IF NOT EXISTS money (user_id bigint, money int, last_daily date);
         """)

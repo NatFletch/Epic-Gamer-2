@@ -1,7 +1,7 @@
 import discord
 import os
 from discord.ext import commands
-
+from extensions.economy import EpicEconomyHelper
 
 class Developer(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -75,6 +75,14 @@ class Developer(commands.Cog):
     async def list_servers(self, ctx):
         """Lists all the servers the bot is in"""
         await ctx.send("\n".join([f"{guild.name} ({guild.id})" for guild in self.bot.guilds]))
+        
+    @commands.command(usage="<user> <amount>")
+    @commands.is_owner()
+    async def set_money(self, ctx: commands.Context, user: discord.User, amount: int):
+        """Gives a user money"""
+        helper = EpicEconomyHelper(self.bot)
+        await helper.set_money(user.id, amount)
+        await ctx.send(f"Successfully set {user.mention}'s balance to {amount}")
 
 
 async def setup(bot):

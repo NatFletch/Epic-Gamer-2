@@ -24,14 +24,14 @@ class ConfigHelper:
 
 
 def check_if_owner():
-    async def predicate(ctx):
-        if ctx.author.id == ctx.guild.owner.id:
+    async def predicate(interaction: discord.Interaction):
+        if interaction.user.id == interaction.guild.owner_id:
             return True
         if commands.is_owner:
             return True
-        await ctx.send("You do not have permission to run this command!")
+        await interaction.response.send_message("You do not have permission to run this command!")
         return False
-    return commands.check(predicate)
+    return app_commands.check(predicate)
 
 class ConfigSelect(discord.ui.Select):
     def __init__(self):
@@ -44,10 +44,10 @@ class ConfigSelect(discord.ui.Select):
     async def callback(self, interaction):
         if self.values[0] == "Staff Role":
             role_select = StaffRoleSelect()
-            await interaction.response.send_message("Please enter your staff role", view=discord.ui.View().add_item(role_select))
+            await interaction.response.send_message("Please enter your staff role", view=discord.ui.View().add_item(role_select), ephemeral=True)
         elif self.values[0] == "Suggestion Channel":
             channel_select = SuggestionChannelSelect()
-            await interaction.response.send_message("Please enter your suggestion channel", view=discord.ui.View().add_item(channel_select))
+            await interaction.response.send_message("Please enter your suggestion channel", view=discord.ui.View().add_item(channel_select), ephemeral=True)
 
 class StaffRoleSelect(discord.ui.RoleSelect):
     def __init__(self):
@@ -57,7 +57,7 @@ class StaffRoleSelect(discord.ui.RoleSelect):
         role = self.values[0]
         chelper = ConfigHelper(interaction.client)
         await chelper.set_staff_role(interaction.guild_id, role.id)
-        await interaction.response.send_message(f"You have successfully set the staff role to: {role.mention}!", allowed_mentions=discord.AllowedMentions().none())
+        await interaction.response.send_message(f"You have successfully set the staff role to: {role.mention}!", allowed_mentions=discord.AllowedMentions().none(), ephemeral=True)
         
 class SuggestionChannelSelect(discord.ui.ChannelSelect):
     def __init__(self):
@@ -67,7 +67,7 @@ class SuggestionChannelSelect(discord.ui.ChannelSelect):
         channel = self.values[0]
         chelper = ConfigHelper(interaction.client)
         await chelper.set_suggestion_channel(interaction.guild_id, channel.id)
-        await interaction.response.send_message(f"You have successfully set the suggestion channel to: {channel.mention}")
+        await interaction.response.send_message(f"You have successfully set the suggestion channel to: {channel.mention}", ephemeral=True)
         
 class Config(commands.Cog):
     def __init__(self, bot):
@@ -85,7 +85,7 @@ class Config(commands.Cog):
             color=self.bot.color,
             timestamp=datetime.now()
         )
-        await interaction.response.send_message(embed=embed, view=discord.ui.View().add_item(ConfigSelect()))
+        await interaction.response.send_message(embed=embed, view=discord.ui.View().add_item(ConfigSelect()), ephemeral=True)
 
 
 

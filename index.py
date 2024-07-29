@@ -2,7 +2,9 @@ import discord
 import asyncpg
 import os
 import tracemalloc
-
+import traceback
+import datetime
+import sys
 from conf import token, database_url, embed_color, economy
 from util.cache import EpicCache
 from discord.ext import commands
@@ -17,7 +19,7 @@ intents.members = True
 class EpicGamer(commands.Bot):
     def __init__(self):
         super().__init__(
-            command_prefix=commands.when_mentioned(),
+            command_prefix=commands.when_mentioned_or("e/"),
             case_insensitive=True,
             intents=intents,
             activity=discord.Activity(type=discord.ActivityType.listening, name=f"an epic group of users")
@@ -55,5 +57,23 @@ class EpicGamer(commands.Bot):
         await super().close()
 
 
+bot = EpicGamer()
+
+@bot.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
+    if isinstance(error, discord.app_commands.NoPrivateMessage):
+        await interaction.response.send_message(f"This command can only be used in servers!")
+    elif isinstance(error, discord.app_commands.CommandOnCooldown):
+        await interaction.response.send_message(f"This command is currently on cooldown. You can try again in {round(error.retry_after)} seconds")
+    else:
+        await interaction.response.send_message(f"An unknown error occured: ```{error}```")
+        print('Ignoring exception in command {}:'.format(interaction.command), file=sys.stderr)
+        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+    embed: discord.Embed = discord.Embed(description="For more help please join the [support server](https://discord.gg/tDYMaz7u9s)!",
+                            color=0xff0000,
+                            timestamp=datetime.datetime.now())
+    await interaction.response.send_message(embed=embed)
+
+
 if __name__ == "__main__":
-    EpicGamer().run(token)
+    bot.run(token)

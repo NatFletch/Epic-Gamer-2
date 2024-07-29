@@ -60,20 +60,24 @@ class EpicEconomyHelper:
         return colors.get(outcome, 0xffffff) # Default to white if outcome is unknown
     
     def search_outcome(self, outcome: int, money: int, prev_balance: int):
-        if outcome == 0:
+        if outcome > 75:
             return "LOSS!", "lost", prev_balance - money, random.choice(["donating to a homeless person", "by dropping them in a sewer", "getting robbed", "natural causes",
                                            "a black hole opening up in your wallet", "getting mugged", "dropping them in a bush", "dropping them in a dumpster"])
-        if outcome == 1:
+        if outcome < 75:
             return "FIND!", "found", prev_balance + money, random.choice(["finding them in a vending machine coin return", "robbing a bank", "finding them on the ground", "begging for donations",
                                            "finding them in a laundromat", "finding them in a bush", "finding them in a trash can",
                                            "finding them in a dumpster", "finding them in a vending machine"])
 
+def dev_exempt_cooldown(interaction: discord.Interaction):
+    if interaction.user.id == 598325949808771083:
+        return None
+    return app_commands.Cooldown(1, 120)
 
 class Economy(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: commands.Bot):
+        self.bot: commands.Bot = bot
         self.helper = EpicEconomyHelper(bot)
-        
+    
     @app_commands.command()
     @discord.app_commands.allowed_installs(users=True, guilds=True)
     @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -134,21 +138,42 @@ class Economy(commands.Cog):
     @app_commands.command()
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    @app_commands.checks.cooldown(1, 120)
+    @app_commands.checks.dynamic_cooldown(dev_exempt_cooldown)
     async def search(self, interaction: discord.Interaction):
         """Searches for more money"""
+        if not await self.helper.check_for_account(interaction.user.id):
+            return await interaction.response.send_message("You do not have an account. Type `/register` to get an account")
+        
         prev_balance = await self.helper.get_money(interaction.user.id)
-        outcome = random.randint(0,1)
+        
+        outcome = random.randint(0,100)
         winnings = random.randint(5,100)
         
-        if prev_balance == 1:
-            return interaction.response.send_message(f"You need more than 1 {self.bot.economy[:-1]} to search. You could lose that {self.bot.economy[-1]} you know.")
+        if prev_balance <= 1:
+            return await interaction.response.send_message(f"You need some {self.bot.economy} before you can search. Don't want to lose that")
         if winnings > prev_balance:
             winnings = random.randint(1, prev_balance-1)
         
         exclaim_status, status, new_balance, action = self.helper.search_outcome(outcome, winnings, prev_balance)
         await self.helper.set_money(interaction.user.id, new_balance)
         await interaction.response.send_message(f"{exclaim_status} You {status} {winnings} {self.bot.economy} by {action}. Your new balance is {new_balance} {self.bot.economy}")
+        
+        
+    @app_commands.command()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def daily(self, interaction: discord.Interaction):
+        """Claim your daily reward"""
+        if not await self.helper.check_for_account(interaction.user.id):
+            return await interaction.response.send_message("You do not have an account. Type `/register` to get an account")
+        
+        profile = await self.bot.db_client.fetchrow("SELECT * FROM money WHERE user_id = $1", interaction.user.id)
+        today = await self.bot.db_client.fetchrow("SELECT CURRENT_DATE")
+        if profile["last_daily"] is None or profile["last_daily"] <= today[0]:
+            await self.bot.db_client.fetchrow("UPDATE money SET money = $1, last_daily = $2 WHERE user_id = $3", profile["money"] + 100, today[0], interaction.user.id)
+            await interaction.response.send_message(f"Successfully claimed daily reward. New balance is {profile["money"] + 100}")
+        else:
+            await interaction.response.send_message("You have already claimed your daily reward for today")
             
 async def setup(bot):
     await bot.add_cog(Economy(bot))

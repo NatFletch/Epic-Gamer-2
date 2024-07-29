@@ -53,7 +53,7 @@ class Fun(commands.Cog):
     async def roll(self, interaction: discord.Interaction, number: int = 6):
         """Rolls a dice between 1 and specified number"""
         number = int(number)
-        if number > 1000000:
+        if number > 1000000 or number <= 0:
             number = 6
         await interaction.response.send_message(f"Rolling {number} sided dice... rolled: {random.randint(1,number)}")
         
