@@ -61,7 +61,7 @@ class StaffRoleSelect(discord.ui.RoleSelect):
         
 class SuggestionChannelSelect(discord.ui.ChannelSelect):
     def __init__(self):
-        super().__init__(placeholder="Choose your suggestio channel", min_values=1, max_values=1)
+        super().__init__(placeholder="Choose your suggestion channel", min_values=1, max_values=1)
     
     async def callback(self, interaction):
         channel = self.values[0]
