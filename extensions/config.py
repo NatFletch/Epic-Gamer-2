@@ -68,7 +68,7 @@ class SuggestionChannelSelect(discord.ui.ChannelSelect):
         chelper = ConfigHelper(interaction.client)
         await chelper.set_suggestion_channel(interaction.guild_id, channel.id)
         await interaction.response.send_message(f"You have successfully set the suggestion channel to: {channel.mention}", ephemeral=True)
-        
+         
 class Config(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

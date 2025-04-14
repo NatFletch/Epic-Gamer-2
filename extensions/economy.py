@@ -68,6 +68,15 @@ class EpicEconomyHelper:
                                            "finding them in a laundromat", "finding them in a bush", "finding them in a trash can",
                                            "finding them in a dumpster", "finding them in a vending machine"])
 
+
+class FishingButton(discord.ui.Button):
+    def __init__(self, button_num: str):
+        super().__init__(style=discord.ButtonStyle.primary,
+                         label=button_num)
+
+    async def callback(interaction: discord.Interaction):
+        pass
+
 def dev_exempt_cooldown(interaction: discord.Interaction):
     if interaction.user.id == 598325949808771083:
         return None
@@ -171,9 +180,25 @@ class Economy(commands.Cog):
         today = await self.bot.db_client.fetchrow("SELECT CURRENT_DATE")
         if profile["last_daily"] is None or profile["last_daily"] <= today[0]:
             await self.bot.db_client.fetchrow("UPDATE money SET money = $1, last_daily = $2 WHERE user_id = $3", profile["money"] + 100, today[0], interaction.user.id)
-            await interaction.response.send_message(f"Successfully claimed daily reward. New balance is {profile["money"] + 100}")
+            await interaction.response.send_message(f"Successfully claimed daily reward. New balance is {profile["money"] + 100} {conf.economy}")
         else:
             await interaction.response.send_message("You have already claimed your daily reward for today")
-            
+
+    @app_commands.command()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def fish(self, interaction: discord.Interaction):
+        """Go fishing"""
+        if not await self.helper.check_for_account(interaction.user.id):
+            return await interaction.response.send_message("You do not have an account. Type `/register` to get an account")
+        
+        embed: discord.Embed = discord.Embed(title="Fishing Menu",
+                                             description="Choose a button to choose your fishing spot",
+                                             color=conf.embed_color)
+        
+
+        money: int = self.helper.get_money(interaction.user.id)
+
+
 async def setup(bot):
     await bot.add_cog(Economy(bot))
