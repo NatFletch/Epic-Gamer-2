@@ -70,12 +70,20 @@ class EpicEconomyHelper:
 
 
 class FishingButton(discord.ui.Button):
-    def __init__(self, button_num: str):
+    def __init__(self, button_num: str, helper: EpicEconomyHelper):
         super().__init__(style=discord.ButtonStyle.primary,
                          label=button_num)
+        self.helper = helper
 
-    async def callback(interaction: discord.Interaction):
-        pass
+    async def callback(self, interaction: discord.Interaction):
+        money: int = await self.helper.get_money(interaction.user.id)
+        winnings: int = random.randint(0,100)
+        await self.helper.set_money(interaction.user.id, money + winnings)
+
+        greets = ["Congrats! You ", "Congratulations! You ", "After fishing for a bit, you ", "A miracle has occured and you ", "You quickly cast your reel and you "]
+        fishs = ["fish ", "trout ", "catfish ", "swordfish ", "shark ", "bass ", "snapper "]
+
+        await interaction.response.send_message(random.choice(greets) + "caught a " + random.choice(fishs) + f"and sold it for {winnings} {conf.economy}")
 
 def dev_exempt_cooldown(interaction: discord.Interaction):
     if interaction.user.id == 598325949808771083:
@@ -187,6 +195,7 @@ class Economy(commands.Cog):
     @app_commands.command()
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @app_commands.checks.dynamic_cooldown(dev_exempt_cooldown)
     async def fish(self, interaction: discord.Interaction):
         """Go fishing"""
         if not await self.helper.check_for_account(interaction.user.id):
@@ -195,9 +204,12 @@ class Economy(commands.Cog):
         embed: discord.Embed = discord.Embed(title="Fishing Menu",
                                              description="Choose a button to choose your fishing spot",
                                              color=conf.embed_color)
-        
+        view: discord.ui.View = discord.ui.View()
+        view.add_item(FishingButton(":one:", self.helper))
+        view.add_item(FishingButton(":two:", self.helper))
+        view.add_item(FishingButton(":three:", self.helper))
 
-        money: int = self.helper.get_money(interaction.user.id)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
 async def setup(bot):
