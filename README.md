@@ -1,4 +1,7 @@
 # Epic-Gamer-2
+An epic bot that does epic things.
+
+This is an ongoing project that I work on from time to time. Epic Gamer 2 is a rewrite of my original epic gamer discord bot. This bot currently has configuration, developer, economy, fun, info, and suggestion commands. Check out the source code for these commands in the `extensions` directory.
 
 ## Installation
 - Install the latest version of Python
